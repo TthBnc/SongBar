@@ -37,3 +37,4 @@ Icon?
 # Generated artifacts
 SongBar.app/
 *.xcarchive
+dist/

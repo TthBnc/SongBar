@@ -72,6 +72,45 @@ SongBar/
 └── Utilities/                 Time formatter
 ```
 
+## Building a .dmg
+
+To produce a distributable disk image:
+
+```sh
+./scripts/build-dmg.sh
+# → dist/SongBar-<version>.dmg
+```
+
+By default the script ad-hoc signs the app. The .dmg works locally but Gatekeeper will warn the first time a user opens it. To bypass once, right-click the app and choose **Open**.
+
+### With an Apple Developer ID
+
+When you have a "Developer ID Application" certificate, set:
+
+```sh
+export DEVELOPER_ID_APPLICATION="Developer ID Application: Your Name (TEAM12345)"
+./scripts/build-dmg.sh
+```
+
+The script enables hardened runtime, signs the app and the .dmg, and the result is shareable without the Gatekeeper warning (provided the user has internet to fetch the certificate revocation list).
+
+### Notarization
+
+To also notarize and staple, store credentials once with `xcrun notarytool` and pass the keychain profile name:
+
+```sh
+xcrun notarytool store-credentials "AC_PROFILE" \
+    --apple-id "you@example.com" \
+    --team-id "TEAM12345" \
+    --password "<app-specific password>"
+
+export DEVELOPER_ID_APPLICATION="Developer ID Application: Your Name (TEAM12345)"
+export NOTARY_PROFILE="AC_PROFILE"
+./scripts/build-dmg.sh
+```
+
+The script submits the .dmg, waits for the Apple notary service, and staples the ticket.
+
 ## Contributing
 
 Bug reports, ideas, and PRs welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
