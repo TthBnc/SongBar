@@ -8,4 +8,5 @@ protocol SpotifyClient: Sendable {
     func seek(to seconds: TimeInterval) async
     func openSpotify() async
     func openCurrentTrack() async
+    func openTrack(_ url: URL) async
 }
