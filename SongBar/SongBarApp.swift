@@ -20,10 +20,6 @@ private struct MenuBarLabel: View {
     var body: some View {
         HStack(spacing: 5) {
             if let thumbnail = viewModel.menuBarArtwork {
-                // Pre-rasterized 18pt rounded NSImage. We don't rely on
-                // SwiftUI's frame/clipShape here because MenuBarExtra's
-                // label rendering ignores them and would draw the source
-                // bitmap at full resolution.
                 Image(nsImage: thumbnail)
             }
             stateIndicator
@@ -36,8 +32,12 @@ private struct MenuBarLabel: View {
     private var stateIndicator: some View {
         switch viewModel.nowPlaying.playbackState {
         case .playing:
-            EqualizerBars()
-                .frame(width: 11, height: 12)
+            // A static "now-playing" glyph. We deliberately avoid TimelineView
+            // animations here — they force MenuBarExtra to re-snapshot the
+            // entire label at the timeline's tick rate and pegged the CPU
+            // on macOS 26.
+            Image(systemName: "waveform")
+                .font(.system(size: 12, weight: .semibold))
         case .paused:
             Image(systemName: "pause.fill")
                 .font(.system(size: 10, weight: .semibold))
@@ -52,31 +52,5 @@ private struct MenuBarLabel: View {
         case .paused:  return "Paused: \(viewModel.menuBarTitle)"
         default:       return viewModel.menuBarTitle
         }
-    }
-}
-
-private struct EqualizerBars: View {
-    private let barCount = 4
-    private let barWidth: CGFloat = 2
-    private let spacing: CGFloat = 1
-    private let minHeight: CGFloat = 3
-
-    var body: some View {
-        TimelineView(.periodic(from: .now, by: 1.0 / 12.0)) { context in
-            HStack(alignment: .center, spacing: spacing) {
-                ForEach(0..<barCount, id: \.self) { i in
-                    Capsule()
-                        .frame(width: barWidth, height: barHeight(for: i, at: context.date))
-                }
-            }
-        }
-    }
-
-    private func barHeight(for index: Int, at date: Date) -> CGFloat {
-        let t = date.timeIntervalSinceReferenceDate * 5.5
-        let phase = Double(index) * 0.9
-        let normalized = (sin(t + phase) + 1) * 0.5
-        let maxHeight: CGFloat = 12
-        return minHeight + CGFloat(normalized) * (maxHeight - minHeight)
     }
 }

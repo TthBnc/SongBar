@@ -60,29 +60,53 @@ actor ArtworkLoader {
 }
 
 extension NSImage {
-    /// Render this image into a fixed-size square NSImage with rounded corners,
-    /// using aspect-fill. Used for the menu bar item, where SwiftUI's .frame()
-    /// + .clipShape() aren't honored by MenuBarExtra's label rendering — the
-    /// bitmap has to arrive pre-shaped.
-    func roundedThumbnail(size pointSize: CGFloat, cornerRadius: CGFloat) -> NSImage {
-        let target = NSSize(width: pointSize, height: pointSize)
-        return NSImage(size: target, flipped: false) { rect in
-            guard self.size.width > 0, self.size.height > 0 else { return false }
-            let path = NSBezierPath(roundedRect: rect, xRadius: cornerRadius, yRadius: cornerRadius)
-            path.addClip()
-            let scale = max(rect.width / self.size.width, rect.height / self.size.height)
-            let drawSize = NSSize(width: self.size.width * scale, height: self.size.height * scale)
-            let drawOrigin = NSPoint(
-                x: (rect.width - drawSize.width) / 2,
-                y: (rect.height - drawSize.height) / 2
-            )
-            self.draw(
-                in: NSRect(origin: drawOrigin, size: drawSize),
-                from: .zero,
-                operation: .copy,
-                fraction: 1.0
-            )
-            return true
-        }
+    /// Render this image into a fixed-size square NSImage with rounded corners.
+    /// Eagerly rasterizes into an NSBitmapImageRep so subsequent draws are
+    /// just a bitmap blit — critical for the menu bar label, where the
+    /// previous deferred-drawing approach re-rasterized the source on every
+    /// menu bar snapshot and pegged the CPU.
+    func roundedThumbnail(size pointSize: CGFloat, cornerRadius: CGFloat) -> NSImage? {
+        guard self.size.width > 0, self.size.height > 0 else { return nil }
+        let scale: CGFloat = 2
+        let pixelWidth = Int(pointSize * scale)
+        let pixelHeight = Int(pointSize * scale)
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: pixelWidth,
+            pixelsHigh: pixelHeight,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        ) else { return nil }
+        rep.size = NSSize(width: pointSize, height: pointSize)
+
+        guard let ctx = NSGraphicsContext(bitmapImageRep: rep) else { return nil }
+        NSGraphicsContext.saveGraphicsState()
+        defer { NSGraphicsContext.restoreGraphicsState() }
+        NSGraphicsContext.current = ctx
+
+        let rect = NSRect(origin: .zero, size: NSSize(width: pointSize, height: pointSize))
+        NSBezierPath(roundedRect: rect, xRadius: cornerRadius, yRadius: cornerRadius).addClip()
+
+        let s = max(rect.width / self.size.width, rect.height / self.size.height)
+        let drawSize = NSSize(width: self.size.width * s, height: self.size.height * s)
+        let drawOrigin = NSPoint(
+            x: (rect.width - drawSize.width) / 2,
+            y: (rect.height - drawSize.height) / 2
+        )
+        self.draw(
+            in: NSRect(origin: drawOrigin, size: drawSize),
+            from: .zero,
+            operation: .copy,
+            fraction: 1.0
+        )
+
+        let result = NSImage(size: NSSize(width: pointSize, height: pointSize))
+        result.addRepresentation(rep)
+        return result
     }
 }
