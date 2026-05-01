@@ -19,13 +19,12 @@ private struct MenuBarLabel: View {
 
     var body: some View {
         HStack(spacing: 5) {
-            if let artwork = viewModel.artwork {
-                Image(nsImage: artwork)
-                    .resizable()
-                    .interpolation(.medium)
-                    .scaledToFill()
-                    .frame(width: 18, height: 18)
-                    .clipShape(RoundedRectangle(cornerRadius: 3))
+            if let thumbnail = viewModel.menuBarArtwork {
+                // Pre-rasterized 18pt rounded NSImage. We don't rely on
+                // SwiftUI's frame/clipShape here because MenuBarExtra's
+                // label rendering ignores them and would draw the source
+                // bitmap at full resolution.
+                Image(nsImage: thumbnail)
             }
             stateIndicator
             Text(viewModel.menuBarTitle)

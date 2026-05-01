@@ -58,3 +58,31 @@ actor ArtworkLoader {
         cache.removeAllObjects()
     }
 }
+
+extension NSImage {
+    /// Render this image into a fixed-size square NSImage with rounded corners,
+    /// using aspect-fill. Used for the menu bar item, where SwiftUI's .frame()
+    /// + .clipShape() aren't honored by MenuBarExtra's label rendering — the
+    /// bitmap has to arrive pre-shaped.
+    func roundedThumbnail(size pointSize: CGFloat, cornerRadius: CGFloat) -> NSImage {
+        let target = NSSize(width: pointSize, height: pointSize)
+        return NSImage(size: target, flipped: false) { rect in
+            guard self.size.width > 0, self.size.height > 0 else { return false }
+            let path = NSBezierPath(roundedRect: rect, xRadius: cornerRadius, yRadius: cornerRadius)
+            path.addClip()
+            let scale = max(rect.width / self.size.width, rect.height / self.size.height)
+            let drawSize = NSSize(width: self.size.width * scale, height: self.size.height * scale)
+            let drawOrigin = NSPoint(
+                x: (rect.width - drawSize.width) / 2,
+                y: (rect.height - drawSize.height) / 2
+            )
+            self.draw(
+                in: NSRect(origin: drawOrigin, size: drawSize),
+                from: .zero,
+                operation: .copy,
+                fraction: 1.0
+            )
+            return true
+        }
+    }
+}

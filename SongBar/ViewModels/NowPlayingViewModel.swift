@@ -8,6 +8,7 @@ import os
 final class NowPlayingViewModel {
     private(set) var nowPlaying: NowPlaying = .empty
     private(set) var artwork: NSImage?
+    private(set) var menuBarArtwork: NSImage?
     private(set) var menuBarTitle: String = "SongBar"
     private(set) var copyConfirmation: Bool = false
 
@@ -130,16 +131,19 @@ final class NowPlayingViewModel {
         if newArtworkURL != lastArtworkURL {
             lastArtworkURL = newArtworkURL
             artwork = nil
+            menuBarArtwork = nil
             artworkLoadTask?.cancel()
             if let url = newArtworkURL {
                 artworkLoadTask = Task { @MainActor [weak self, artworkLoader] in
                     let image = await artworkLoader.loadArtwork(from: url)
                     guard let self, !Task.isCancelled, self.lastArtworkURL == url else { return }
                     self.artwork = image
+                    self.menuBarArtwork = image?.roundedThumbnail(size: 18, cornerRadius: 4)
                 }
             }
         } else if titleChanged && newArtworkURL == nil {
             artwork = nil
+            menuBarArtwork = nil
         }
     }
 
