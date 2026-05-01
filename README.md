@@ -7,6 +7,10 @@ SongBar puts the current artist and song title in your menu bar. Click it for a 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-macOS%2014+-blue)
 
+<p align="center">
+  <img src="docs/screenshots/panel.png" alt="SongBar in the menu bar with its panel open" width="372">
+</p>
+
 ## Features
 
 - Album art + artist – song title visible in your menu bar
