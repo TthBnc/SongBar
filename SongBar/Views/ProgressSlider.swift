@@ -15,7 +15,7 @@ struct ProgressSlider: View {
     }
 
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 4) {
             Slider(
                 value: sliderBinding,
                 in: 0...max(viewModel.nowPlaying.duration, 1),
@@ -29,17 +29,18 @@ struct ProgressSlider: View {
                 }
             )
             .disabled(isDisabled)
+            .tint(.primary.opacity(0.75))
             .accessibilityLabel("Playback position")
 
             HStack {
                 Text(TimeFormatter.format(seconds: viewModel.displayPosition))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
                     .monospacedDigit()
                 Spacer()
                 Text(TimeFormatter.format(seconds: viewModel.nowPlaying.duration))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
                     .monospacedDigit()
             }
         }
