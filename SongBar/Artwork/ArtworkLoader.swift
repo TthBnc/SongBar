@@ -121,12 +121,15 @@ extension NSImage {
     func withIndicatorOnLeft(
         indicatorSize: NSSize,
         gap: CGFloat = 5,
+        badgePadding: CGFloat = 2.5,
         draw indicator: (_ origin: NSPoint, _ size: NSSize) -> Void
     ) -> NSImage {
         guard self.size.width > 0, self.size.height > 0 else { return self }
-        let height = max(self.size.height, indicatorSize.height)
+        let badgeW = indicatorSize.width + badgePadding * 2
+        let badgeH = indicatorSize.height + badgePadding * 2
+        let height = max(self.size.height, badgeH)
         let canvasSize = NSSize(
-            width: indicatorSize.width + gap + self.size.width,
+            width: badgeW + gap + self.size.width,
             height: height
         )
         let scale: CGFloat = 2
@@ -152,10 +155,16 @@ extension NSImage {
         defer { NSGraphicsContext.restoreGraphicsState() }
         NSGraphicsContext.current = ctx
 
-        let indicatorY = (canvasSize.height - indicatorSize.height) / 2
-        indicator(NSPoint(x: 0, y: indicatorY), indicatorSize)
+        let badgeY = (canvasSize.height - badgeH) / 2
+        let badgeRect = NSRect(x: 0, y: badgeY, width: badgeW, height: badgeH)
+        NSColor.systemGray.withAlphaComponent(0.55).setFill()
+        let cornerRadius = min(badgeW, badgeH) * 0.3
+        NSBezierPath(roundedRect: badgeRect, xRadius: cornerRadius, yRadius: cornerRadius).fill()
 
-        let artworkX = indicatorSize.width + gap
+        let indicatorOrigin = NSPoint(x: badgePadding, y: badgeY + badgePadding)
+        indicator(indicatorOrigin, indicatorSize)
+
+        let artworkX = badgeW + gap
         let artworkY = (canvasSize.height - self.size.height) / 2
         self.draw(
             in: NSRect(origin: NSPoint(x: artworkX, y: artworkY), size: self.size),
@@ -170,8 +179,9 @@ extension NSImage {
     }
 
     /// Draw equalizer bars at `origin` within `size` into the active NSGraphicsContext.
-    /// Drawn in the system label color so the indicator reads correctly on
-    /// both light and dark menu bar backgrounds.
+    /// Drawn white — always paired with the gray pill backdrop in
+    /// withIndicatorOnLeft, so contrast is guaranteed regardless of menu
+    /// bar appearance.
     static func drawEqualizerBars(
         frame: Int,
         at origin: NSPoint,
@@ -182,7 +192,7 @@ extension NSImage {
     ) {
         let totalW = CGFloat(barCount) * barWidth + CGFloat(barCount - 1) * spacing
         let scaleX = size.width / totalW
-        NSColor.labelColor.setFill()
+        NSColor.white.setFill()
         for i in 0..<barCount {
             let t = Double(frame) * 0.55
             let phase = Double(i) * 0.95
@@ -197,11 +207,11 @@ extension NSImage {
     }
 
     /// Draw a pause glyph (two vertical rounded rectangles) at `origin` within
-    /// `size` into the active NSGraphicsContext.
+    /// `size` into the active NSGraphicsContext. White on the gray pill.
     static func drawPauseGlyph(at origin: NSPoint, in size: NSSize) {
         let pillarW = max(2, size.width * 0.35)
         let gap = size.width - pillarW * 2
-        NSColor.labelColor.setFill()
+        NSColor.white.setFill()
         let leftRect = NSRect(x: origin.x, y: origin.y, width: pillarW, height: size.height)
         let rightRect = NSRect(x: origin.x + pillarW + gap, y: origin.y, width: pillarW, height: size.height)
         NSBezierPath(roundedRect: leftRect, xRadius: pillarW / 2, yRadius: pillarW / 2).fill()
