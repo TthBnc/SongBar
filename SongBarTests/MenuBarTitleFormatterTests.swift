@@ -35,9 +35,11 @@ final class MenuBarTitleFormatterTests: XCTestCase {
         XCTAssertEqual(MenuBarTitleFormatter.format(nowPlaying: np), "Phoebe Bridgers - Motion Sickness")
     }
 
-    func test_ok_paused_prependsPausedPrefix() {
+    func test_ok_paused_doesNotPrependPrefix() {
+        // Playback state is conveyed by the menu bar's icon (pause / wave),
+        // so the title text stays clean.
         let np = makeNowPlaying(title: "Foo", artist: "Bar", playbackState: .paused)
-        XCTAssertEqual(MenuBarTitleFormatter.format(nowPlaying: np), "Paused: Bar - Foo")
+        XCTAssertEqual(MenuBarTitleFormatter.format(nowPlaying: np), "Bar - Foo")
     }
 
     func test_ok_titleOnly_returnsTitle() {
@@ -113,13 +115,14 @@ final class MenuBarTitleFormatterTests: XCTestCase {
         XCTAssertNotEqual(result.last, MenuBarTitleFormatter.ellipsis)
     }
 
-    func test_pausedPrefixPushesOverMaxLength_truncatesToFortyEight() {
-        // base = "Bar - <40-char title>" = 6 + 40 = 46 chars (under 48).
-        // With "Paused: " prefix (8 chars) -> 54 chars total -> truncates to 48.
+    func test_pausedDoesNotAffectTruncation() {
+        // base = "Bar - <40-char title>" = 46 chars; under 48, no truncation.
+        // The Paused: prefix used to be added here; now it isn't, so the
+        // title stays untruncated regardless of playback state.
         let title = String(repeating: "a", count: 40)
         let np = makeNowPlaying(title: title, artist: "Bar", playbackState: .paused)
         let result = MenuBarTitleFormatter.format(nowPlaying: np)
-        XCTAssertEqual(result.count, 48)
-        XCTAssertEqual(result.last, MenuBarTitleFormatter.ellipsis)
+        XCTAssertEqual(result.count, 46)
+        XCTAssertNotEqual(result.last, MenuBarTitleFormatter.ellipsis)
     }
 }

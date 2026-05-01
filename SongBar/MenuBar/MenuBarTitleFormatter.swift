@@ -23,9 +23,7 @@ enum MenuBarTitleFormatter {
             return fallback
         }
 
-        let prefixed = nowPlaying.playbackState == .paused ? "Paused: \(base)" : base
-
-        return truncate(prefixed, to: maxLength)
+        return truncate(base, to: maxLength)
     }
 
     private static func nonEmpty(_ s: String?) -> String? {
