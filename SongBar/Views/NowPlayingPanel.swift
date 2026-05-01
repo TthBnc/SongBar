@@ -2,52 +2,44 @@ import SwiftUI
 
 struct NowPlayingPanel: View {
     @Bindable var viewModel: NowPlayingViewModel
+    @State private var isFavorited: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Hard-error banner (notInstalled / notRunning / automationDenied / unknown)
             let availability = viewModel.nowPlaying.availability
+
             if availability != .ok && availability != .noActiveTrack {
                 ErrorBanner(availability: availability)
-                    .padding(.bottom, 12)
+                    .padding(.bottom, 16)
             }
 
-            // Artwork — centered, with layered shadow treatment
             HStack {
-                Spacer()
-                ArtworkView(image: viewModel.artwork)
-                Spacer()
+                Spacer(minLength: 0)
+                ArtworkView(image: viewModel.artwork, size: 160)
+                Spacer(minLength: 0)
             }
-            .padding(.bottom, 16)
+            .padding(.bottom, 22)
 
-            // Track metadata or soft-state message
             if availability == .ok {
-                metadataBlock
-                    .padding(.bottom, 12)
+                metadataRow
+                    .padding(.bottom, 18)
+                ProgressSlider(viewModel: viewModel)
+                    .padding(.bottom, 18)
             } else if availability == .noActiveTrack {
                 emptyStateView
-                    .padding(.bottom, 12)
+                    .padding(.bottom, 18)
             }
 
-            // Progress slider — only when a track is active
-            if availability == .ok {
-                ProgressSlider(viewModel: viewModel)
-                    .padding(.bottom, 12)
-            }
-
-            // Playback controls — centered
             HStack {
-                Spacer()
+                Spacer(minLength: 0)
                 PlaybackControls(viewModel: viewModel)
-                Spacer()
+                Spacer(minLength: 0)
             }
-            .padding(.bottom, 16)
+            .padding(.bottom, 22)
 
-            // Open / share actions
             ActionsRow(viewModel: viewModel)
-                .padding(.bottom, 12)
+                .padding(.bottom, 14)
 
-            // Footer: quit button
             Divider()
                 .padding(.bottom, 8)
 
@@ -62,55 +54,89 @@ struct NowPlayingPanel: View {
                 .accessibilityLabel("Quit SongBar")
             }
         }
-        .padding(16)
-        .frame(width: 320)
+        .padding(20)
+        .frame(width: 360)
         .onAppear {
-            // Polling runs for the whole app lifetime (started in the
-            // view model's init). On panel open, jump-refresh so the
-            // popover never shows a stale tick.
             Task { await viewModel.refresh() }
         }
     }
 
-    // MARK: - Metadata
+    // MARK: - Title row + heart
 
-    private var metadataBlock: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            if let title = viewModel.nowPlaying.title {
-                Text(title)
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+    private var metadataRow: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                if let title = viewModel.nowPlaying.title {
+                    Text(title)
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+                if let artist = viewModel.nowPlaying.artist {
+                    Text(artist)
+                        .font(.body)
+                        .foregroundStyle(.primary.opacity(0.85))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+                if let album = viewModel.nowPlaying.album {
+                    Text(album)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
             }
-            if let artist = viewModel.nowPlaying.artist {
-                Text(artist)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-            }
-            if let album = viewModel.nowPlaying.album {
-                Text(album)
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .padding(.top, 1)
-            }
+            Spacer(minLength: 8)
+            favoriteButton
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var favoriteButton: some View {
+        let label = Image(systemName: isFavorited ? "heart.fill" : "heart")
+            .font(.system(size: 16, weight: .regular))
+            .foregroundStyle(isFavorited ? Color.pink : Color.primary)
+            .frame(width: 32, height: 32)
+
+        if #available(macOS 26, *) {
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    isFavorited.toggle()
+                }
+            } label: {
+                label
+            }
+            .glassEffect(.regular.interactive(), in: .circle)
+            .buttonStyle(.plain)
+            .accessibilityLabel(isFavorited ? "Unfavorite" : "Favorite")
+        } else {
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    isFavorited.toggle()
+                }
+            } label: {
+                ZStack {
+                    Circle().fill(Color.white.opacity(0.08))
+                    label
+                }
+                .frame(width: 32, height: 32)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isFavorited ? "Unfavorite" : "Favorite")
+        }
     }
 
     // MARK: - Empty state
 
     private var emptyStateView: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 8) {
             Image(systemName: "music.note.list")
-                .font(.system(size: 22, weight: .light))
+                .font(.system(size: 28, weight: .light))
                 .foregroundStyle(.tertiary)
             Text("Nothing playing")
-                .font(.subheadline)
+                .font(.headline)
                 .foregroundStyle(.secondary)
             Text("Start a track in Spotify to see it here.")
                 .font(.caption)
@@ -118,6 +144,6 @@ struct NowPlayingPanel: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.vertical, 8)
+        .padding(.vertical, 12)
     }
 }

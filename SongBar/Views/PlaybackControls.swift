@@ -7,93 +7,84 @@ struct PlaybackControls: View {
         viewModel.nowPlaying.playbackState == .playing
     }
 
+    private let sideSize: CGFloat = 50
+    private let centerSize: CGFloat = 64
+
     var body: some View {
-        if #available(macOS 26, *) {
-            glassControls
-        } else {
-            fallbackControls
-        }
-    }
-
-    // MARK: - macOS 26+ Liquid Glass controls
-
-    @available(macOS 26, *)
-    private var glassControls: some View {
-        GlassEffectContainer(spacing: 8) {
-            HStack(spacing: 8) {
-                Button {
-                    Task { await viewModel.previous() }
-                } label: {
-                    Image(systemName: "backward.fill")
-                        .font(.system(size: 17, weight: .medium))
-                        .frame(width: 38, height: 38)
-                }
-                .glassEffect(.regular.interactive(), in: .circle)
-                .disabled(!viewModel.nowPlaying.controlsEnabled)
-                .accessibilityLabel("Previous track")
-
-                Button {
-                    Task { await viewModel.playPause() }
-                } label: {
-                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 22, weight: .medium))
-                        .frame(width: 50, height: 50)
-                }
-                .glassEffect(.regular.tint(.primary.opacity(0.1)).interactive(), in: .circle)
-                .disabled(!viewModel.nowPlaying.controlsEnabled)
-                .accessibilityLabel(isPlaying ? "Pause" : "Play")
-
-                Button {
-                    Task { await viewModel.next() }
-                } label: {
-                    Image(systemName: "forward.fill")
-                        .font(.system(size: 17, weight: .medium))
-                        .frame(width: 38, height: 38)
-                }
-                .glassEffect(.regular.interactive(), in: .circle)
-                .disabled(!viewModel.nowPlaying.controlsEnabled)
-                .accessibilityLabel("Next track")
-            }
-        }
-    }
-
-    // MARK: - macOS 14/15 fallback controls
-
-    private var fallbackControls: some View {
-        HStack(spacing: 16) {
-            Button {
+        HStack(spacing: 18) {
+            sideButton(
+                systemImage: "backward.fill",
+                accessibility: "Previous track"
+            ) {
                 Task { await viewModel.previous() }
-            } label: {
-                Image(systemName: "backward.fill")
-                    .font(.system(size: 17, weight: .medium))
-                    .frame(width: 38, height: 38)
             }
-            .buttonStyle(.borderless)
-            .disabled(!viewModel.nowPlaying.controlsEnabled)
-            .accessibilityLabel("Previous track")
 
-            Button {
-                Task { await viewModel.playPause() }
-            } label: {
-                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 22, weight: .semibold))
-                    .frame(width: 50, height: 50)
-                    .background(.regularMaterial, in: Circle())
-            }
-            .buttonStyle(.borderless)
-            .disabled(!viewModel.nowPlaying.controlsEnabled)
-            .accessibilityLabel(isPlaying ? "Pause" : "Play")
+            playPauseButton
 
-            Button {
+            sideButton(
+                systemImage: "forward.fill",
+                accessibility: "Next track"
+            ) {
                 Task { await viewModel.next() }
-            } label: {
-                Image(systemName: "forward.fill")
-                    .font(.system(size: 17, weight: .medium))
-                    .frame(width: 38, height: 38)
             }
-            .buttonStyle(.borderless)
+        }
+    }
+
+    // MARK: - Center play/pause: solid white prominent
+
+    private var playPauseButton: some View {
+        Button {
+            Task { await viewModel.playPause() }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Color.white)
+                    .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
+                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(Color.black)
+                    .offset(x: isPlaying ? 0 : 1.5)
+            }
+            .frame(width: centerSize, height: centerSize)
+        }
+        .buttonStyle(.plain)
+        .disabled(!viewModel.nowPlaying.controlsEnabled)
+        .accessibilityLabel(isPlaying ? "Pause" : "Play")
+    }
+
+    // MARK: - Side buttons (prev / next): dark glass circles
+
+    @ViewBuilder
+    private func sideButton(
+        systemImage: String,
+        accessibility: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        if #available(macOS 26, *) {
+            Button(action: action) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: sideSize, height: sideSize)
+            }
+            .glassEffect(.regular.interactive(), in: .circle)
+            .buttonStyle(.plain)
             .disabled(!viewModel.nowPlaying.controlsEnabled)
-            .accessibilityLabel("Next track")
+            .accessibilityLabel(accessibility)
+        } else {
+            Button(action: action) {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.10))
+                    Image(systemName: systemImage)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+                .frame(width: sideSize, height: sideSize)
+            }
+            .buttonStyle(.plain)
+            .disabled(!viewModel.nowPlaying.controlsEnabled)
+            .accessibilityLabel(accessibility)
         }
     }
 }

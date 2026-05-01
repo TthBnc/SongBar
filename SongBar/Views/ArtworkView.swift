@@ -3,6 +3,7 @@ import AppKit
 
 struct ArtworkView: View {
     let image: NSImage?
+    var size: CGFloat = 160
 
     var body: some View {
         Group {
@@ -14,15 +15,15 @@ struct ArtworkView: View {
                 ZStack {
                     Color.secondary.opacity(0.12)
                     Image(systemName: "music.note")
-                        .font(.system(size: 44, weight: .light))
+                        .font(.system(size: size * 0.32, weight: .light))
                         .foregroundStyle(.secondary.opacity(0.6))
                 }
             }
         }
-        .frame(width: 132, height: 132)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.28), radius: 12, x: 0, y: 6)
-        .shadow(color: .black.opacity(0.10), radius: 2, x: 0, y: 1)
+        .frame(width: size, height: size)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .shadow(color: .black.opacity(0.45), radius: 18, x: 0, y: 10)
+        .shadow(color: .black.opacity(0.18), radius: 3, x: 0, y: 1)
         .accessibilityLabel("Album artwork")
     }
 }
