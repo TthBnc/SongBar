@@ -22,25 +22,12 @@ private struct MenuBarLabel: View {
             if let thumbnail = viewModel.menuBarArtwork {
                 Image(nsImage: thumbnail)
             }
-            stateIndicator
+            if let stateImage = viewModel.menuBarStateImage {
+                Image(nsImage: stateImage)
+            }
             Text(viewModel.menuBarTitle)
         }
         .accessibilityLabel(accessibilityLabel)
-    }
-
-    @ViewBuilder
-    private var stateIndicator: some View {
-        switch viewModel.nowPlaying.playbackState {
-        case .playing:
-            if let bars = viewModel.menuBarEqualizerImage {
-                Image(nsImage: bars)
-            }
-        case .paused:
-            Image(systemName: "pause.fill")
-                .font(.system(size: 10, weight: .semibold))
-        default:
-            EmptyView()
-        }
     }
 
     private var accessibilityLabel: String {

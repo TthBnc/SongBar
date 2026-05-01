@@ -11,12 +11,17 @@ final class NowPlayingViewModel {
     private(set) var menuBarArtwork: NSImage?
     private(set) var menuBarTitle: String = "SongBar"
     private(set) var copyConfirmation: Bool = false
-    /// Pre-rasterized equalizer bars NSImage. Updated on each animation
-    /// frame while playing; nil otherwise. Rendered in the menu bar via
-    /// Image(nsImage:) so we don't depend on SwiftUI shape colors inside
-    /// MenuBarExtra's label rendering.
-    private(set) var menuBarEqualizerImage: NSImage?
+    /// Single NSImage for the menu bar state indicator: an animated
+    /// equalizer while playing, a pause glyph while paused, nil otherwise.
+    /// One stable Image(nsImage:) view in the label avoids SwiftUI
+    /// structural-identity glitches inside MenuBarExtra.
+    private(set) var menuBarStateImage: NSImage?
     private var equalizerFrame: Int = 0
+    private static let pauseIndicator: NSImage? = {
+        let image = NSImage(systemSymbolName: "pause.fill", accessibilityDescription: nil)
+        image?.isTemplate = true
+        return image
+    }()
 
     var isDraggingSeek: Bool { seekDragState != nil }
 
@@ -174,24 +179,26 @@ final class NowPlayingViewModel {
     }
 
     private func updateEqualizerAnimation() {
-        let shouldAnimate = nowPlaying.playbackState == .playing
-        if shouldAnimate {
-            if menuBarEqualizerImage == nil {
-                menuBarEqualizerImage = NSImage.equalizerBars(frame: equalizerFrame)
-            }
+        switch nowPlaying.playbackState {
+        case .playing:
+            menuBarStateImage = NSImage.equalizerBars(frame: equalizerFrame)
             guard equalizerTask == nil else { return }
             equalizerTask = Task { @MainActor [weak self] in
                 while !Task.isCancelled {
                     try? await Task.sleep(for: .milliseconds(180))
                     guard let self, !Task.isCancelled else { return }
                     self.equalizerFrame &+= 1
-                    self.menuBarEqualizerImage = NSImage.equalizerBars(frame: self.equalizerFrame)
+                    self.menuBarStateImage = NSImage.equalizerBars(frame: self.equalizerFrame)
                 }
             }
-        } else {
+        case .paused:
             equalizerTask?.cancel()
             equalizerTask = nil
-            menuBarEqualizerImage = nil
+            menuBarStateImage = Self.pauseIndicator
+        default:
+            equalizerTask?.cancel()
+            equalizerTask = nil
+            menuBarStateImage = nil
         }
     }
 
