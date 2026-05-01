@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0F3326"/>
+      <stop offset="1" stop-color="#020F0A"/>
+    </linearGradient>
+    <radialGradient id="halo4" cx="0.5" cy="0.55" r="0.55">
+      <stop offset="0" stop-color="#10B981" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#10B981" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bar4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#A7F3D0"/>
+      <stop offset="0.5" stop-color="#34D399"/>
+      <stop offset="1" stop-color="#10B981"/>
+    </linearGradient>
+    <linearGradient id="gloss4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="barglow4" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" rx="240" ry="240" fill="url(#bg4)"/>
+  <rect width="1024" height="1024" rx="240" ry="240" fill="url(#halo4)"/>
+  <rect width="1024" height="1024" rx="240" ry="240" fill="url(#gloss4)"/>
+
+  <!-- 6 bars, irregular "frozen-EQ" rhythm.
+       Heights 240 / 460 / 420 / 260 / 540 / 360, width 64, gap 24, centered. -->
+  <g filter="url(#barglow4)" fill="url(#bar4)">
+    <rect x="260" y="392" width="64" height="240" rx="32"/>
+    <rect x="348" y="282" width="64" height="460" rx="32"/>
+    <rect x="436" y="302" width="64" height="420" rx="32"/>
+    <rect x="524" y="382" width="64" height="260" rx="32"/>
+    <rect x="612" y="242" width="64" height="540" rx="32"/>
+    <rect x="700" y="332" width="64" height="360" rx="32"/>
+  </g>
+</svg>
