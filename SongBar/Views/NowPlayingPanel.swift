@@ -2,7 +2,6 @@ import SwiftUI
 
 struct NowPlayingPanel: View {
     @Bindable var viewModel: NowPlayingViewModel
-    @State private var isFavorited: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -61,71 +60,33 @@ struct NowPlayingPanel: View {
         }
     }
 
-    // MARK: - Title row + heart
+    // MARK: - Title block
 
     private var metadataRow: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                if let title = viewModel.nowPlaying.title {
-                    Text(title)
-                        .font(.title2.weight(.bold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                }
-                if let artist = viewModel.nowPlaying.artist {
-                    Text(artist)
-                        .font(.body)
-                        .foregroundStyle(.primary.opacity(0.85))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                }
-                if let album = viewModel.nowPlaying.album {
-                    Text(album)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                }
+        VStack(alignment: .leading, spacing: 4) {
+            if let title = viewModel.nowPlaying.title {
+                Text(title)
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
             }
-            Spacer(minLength: 8)
-            favoriteButton
+            if let artist = viewModel.nowPlaying.artist {
+                Text(artist)
+                    .font(.body)
+                    .foregroundStyle(.primary.opacity(0.85))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+            if let album = viewModel.nowPlaying.album {
+                Text(album)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
         }
-    }
-
-    @ViewBuilder
-    private var favoriteButton: some View {
-        let label = Image(systemName: isFavorited ? "heart.fill" : "heart")
-            .font(.system(size: 16, weight: .regular))
-            .foregroundStyle(isFavorited ? Color.pink : Color.primary)
-            .frame(width: 32, height: 32)
-
-        if #available(macOS 26, *) {
-            Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                    isFavorited.toggle()
-                }
-            } label: {
-                label
-            }
-            .glassEffect(.regular.interactive(), in: .circle)
-            .buttonStyle(.plain)
-            .accessibilityLabel(isFavorited ? "Unfavorite" : "Favorite")
-        } else {
-            Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                    isFavorited.toggle()
-                }
-            } label: {
-                ZStack {
-                    Circle().fill(Color.white.opacity(0.08))
-                    label
-                }
-                .frame(width: 32, height: 32)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isFavorited ? "Unfavorite" : "Favorite")
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Empty state
