@@ -11,6 +11,10 @@ final class NowPlayingViewModel {
     private(set) var menuBarArtwork: NSImage?
     private(set) var menuBarTitle: String = "SongBar"
     private(set) var copyConfirmation: Bool = false
+    /// Monotonically increasing frame counter for the menu bar equalizer
+    /// animation. Increments only while `playbackState == .playing`.
+    /// Read by the equalizer view to derive bar heights from sin().
+    private(set) var equalizerFrame: Int = 0
 
     var isDraggingSeek: Bool { seekDragState != nil }
 
@@ -28,6 +32,7 @@ final class NowPlayingViewModel {
     private var seekDragState: TimeInterval?
     private var inflightCommands: Set<Command> = []
     private var copyConfirmationResetTask: Task<Void, Never>?
+    private var equalizerTask: Task<Void, Never>?
 
     private enum Command: Hashable { case playPause, next, previous }
 
@@ -62,6 +67,8 @@ final class NowPlayingViewModel {
         artworkLoadTask = nil
         copyConfirmationResetTask?.cancel()
         copyConfirmationResetTask = nil
+        equalizerTask?.cancel()
+        equalizerTask = nil
     }
 
     func refresh() async {
@@ -126,6 +133,7 @@ final class NowPlayingViewModel {
             || snapshot.title != nowPlaying.title
         nowPlaying = snapshot
         menuBarTitle = MenuBarTitleFormatter.format(nowPlaying: snapshot)
+        updateEqualizerAnimation()
 
         let newArtworkURL = snapshot.artworkURL
         if newArtworkURL != lastArtworkURL {
@@ -161,6 +169,23 @@ final class NowPlayingViewModel {
         let lower = max(0, seconds)
         guard nowPlaying.duration > 0 else { return lower }
         return min(lower, nowPlaying.duration)
+    }
+
+    private func updateEqualizerAnimation() {
+        let shouldAnimate = nowPlaying.playbackState == .playing
+        if shouldAnimate {
+            guard equalizerTask == nil else { return }
+            equalizerTask = Task { @MainActor [weak self] in
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .milliseconds(180))
+                    guard let self, !Task.isCancelled else { return }
+                    self.equalizerFrame &+= 1
+                }
+            }
+        } else {
+            equalizerTask?.cancel()
+            equalizerTask = nil
+        }
     }
 
     private func showCopyConfirmation() {
