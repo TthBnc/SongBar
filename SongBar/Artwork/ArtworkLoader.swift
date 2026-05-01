@@ -157,7 +157,11 @@ extension NSImage {
 
         let badgeY = (canvasSize.height - badgeH) / 2
         let badgeRect = NSRect(x: 0, y: badgeY, width: badgeW, height: badgeH)
-        NSColor.systemGray.withAlphaComponent(0.55).setFill()
+        // Hardcoded so the pill renders the same regardless of system
+        // appearance — adaptive colors get baked into the bitmap once,
+        // which would invert relative to white-on-pill in some modes.
+        // Mid-dark gray reads against both light and dark menu bars.
+        NSColor(deviceWhite: 0.35, alpha: 0.85).setFill()
         let cornerRadius = min(badgeW, badgeH) * 0.3
         NSBezierPath(roundedRect: badgeRect, xRadius: cornerRadius, yRadius: cornerRadius).fill()
 
