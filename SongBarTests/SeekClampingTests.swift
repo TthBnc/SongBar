@@ -41,7 +41,7 @@ final class SeekClampingTests: XCTestCase {
     }
 
     private func makeViewModel(client: RecordingSpotifyClient) async -> NowPlayingViewModel {
-        let vm = NowPlayingViewModel(client: client, artworkLoader: ArtworkLoader())
+        let vm = NowPlayingViewModel(client: client, artworkLoader: ArtworkLoader(), autoStart: false)
         await vm.refresh()
         return vm
     }

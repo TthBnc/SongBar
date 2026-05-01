@@ -61,11 +61,10 @@ struct NowPlayingPanel: View {
         .padding(16)
         .frame(width: 320)
         .onAppear {
-            viewModel.start()
+            // Polling runs for the whole app lifetime (started in the
+            // view model's init). On panel open, jump-refresh so the
+            // popover never shows a stale tick.
             Task { await viewModel.refresh() }
-        }
-        .onDisappear {
-            viewModel.stop()
         }
     }
 

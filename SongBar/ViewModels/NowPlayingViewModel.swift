@@ -32,10 +32,14 @@ final class NowPlayingViewModel {
 
     init(
         client: SpotifyClient = AppleEventsSpotifyClient(),
-        artworkLoader: ArtworkLoader = ArtworkLoader()
+        artworkLoader: ArtworkLoader = ArtworkLoader(),
+        autoStart: Bool = true
     ) {
         self.client = client
         self.artworkLoader = artworkLoader
+        if autoStart {
+            start()
+        }
     }
 
     func start() {

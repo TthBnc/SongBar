@@ -6,22 +6,34 @@ actor AppleEventsSpotifyClient: SpotifyClient {
     private static let bundleIdentifier = "com.spotify.client"
     private static let logger = Logger(subsystem: "dev.tothbnc.SongBar", category: "spotify")
 
+    // `st` and `pos` are AppleScript reserved/ambiguous tokens — using
+    // them as variable names makes compileAndReturnError fail with -2741
+    // and the whole fetch silently returns nil. Keep variable names safe.
+    // Numbers are sent as integer milliseconds so locale-dependent decimal
+    // separators (e.g. comma on hu_HU) don't break Swift's Double parsing.
     private static let fetchSource = """
     tell application "Spotify"
         if not running then return "NOT_RUNNING"
         try
-            set st to player state as text
-            set pos to player position
+            set thePlayerState to player state as text
+            set thePositionMs to (player position * 1000) as integer
             try
-                set tn to name of current track
-                set tar to artist of current track
-                set tal to album of current track
-                set tdur to duration of current track
-                set turl to spotify url of current track
-                set tarturl to artwork url of current track
-                return st & "|||" & pos & "|||" & tn & "|||" & tar & "|||" & tal & "|||" & tdur & "|||" & turl & "|||" & tarturl
+                set theTrack to current track
+                set theTrackName to name of theTrack
+                set theArtist to artist of theTrack
+                set theAlbum to album of theTrack
+                set theDurationMs to (duration of theTrack) as integer
+                set theSpotifyURL to ""
+                try
+                    set theSpotifyURL to spotify url of theTrack
+                end try
+                set theArtworkURL to ""
+                try
+                    set theArtworkURL to artwork url of theTrack
+                end try
+                return thePlayerState & "|||" & thePositionMs & "|||" & theTrackName & "|||" & theArtist & "|||" & theAlbum & "|||" & theDurationMs & "|||" & theSpotifyURL & "|||" & theArtworkURL
             on error
-                return st & "|||" & pos & "|||NO_TRACK"
+                return thePlayerState & "|||" & thePositionMs & "|||NO_TRACK"
             end try
         on error
             return "ERROR"
@@ -167,6 +179,7 @@ actor AppleEventsSpotifyClient: SpotifyClient {
             )
         }
 
+        Self.logger.debug("fetchNowPlaying raw: \(raw, privacy: .private)")
         return parse(raw)
     }
 
@@ -202,7 +215,8 @@ actor AppleEventsSpotifyClient: SpotifyClient {
         }
 
         let state = mapState(parts[0])
-        let position = TimeInterval(parts[1]) ?? 0
+        let positionMs = Int(parts[1]) ?? 0
+        let position = TimeInterval(positionMs) / 1000.0
 
         if parts.count >= 3, parts[2] == "NO_TRACK" {
             return NowPlaying(
@@ -229,8 +243,8 @@ actor AppleEventsSpotifyClient: SpotifyClient {
         let title = nilIfEmpty(parts[2])
         let artist = nilIfEmpty(parts[3])
         let album = nilIfEmpty(parts[4])
-        let durationMillis = Double(parts[5]) ?? 0
-        let duration = durationMillis / 1000.0
+        let durationMs = Int(parts[5]) ?? 0
+        let duration = TimeInterval(durationMs) / 1000.0
         let uri = nilIfEmpty(parts[6])
         let artworkURL = (parts.count >= 8) ? URL(string: parts[7]) : nil
 
@@ -294,13 +308,16 @@ actor AppleEventsSpotifyClient: SpotifyClient {
 
     func seek(to seconds: TimeInterval) async {
         guard isInstalled(), isRunning() else { return }
-        let safe: TimeInterval
+        let safeSeconds: TimeInterval
         if seconds.isNaN || seconds.isInfinite || seconds < 0 {
-            safe = 0
+            safeSeconds = 0
         } else {
-            safe = seconds
+            safeSeconds = seconds
         }
-        let source = "tell application \"Spotify\" to set player position to \(safe)"
+        // Pass integer milliseconds and let AppleScript divide. Avoids any
+        // locale-dependent decimal-separator surprises in script literals.
+        let milliseconds = Int(safeSeconds * 1000)
+        let source = "tell application \"Spotify\" to set player position to (\(milliseconds) / 1000)"
         guard let script = NSAppleScript(source: source) else { return }
         var error: NSDictionary?
         _ = script.executeAndReturnError(&error)

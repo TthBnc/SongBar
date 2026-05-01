@@ -7,13 +7,6 @@ struct SongBarApp: App {
     var body: some Scene {
         MenuBarExtra(viewModel.menuBarTitle) {
             NowPlayingPanel(viewModel: viewModel)
-                .onAppear {
-                    viewModel.start()
-                    Task { await viewModel.refresh() }
-                }
-                .onDisappear {
-                    viewModel.stop()
-                }
         }
         .menuBarExtraStyle(.window)
     }
