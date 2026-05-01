@@ -67,6 +67,7 @@ private struct EqualizerBars: View {
         HStack(alignment: .center, spacing: spacing) {
             ForEach(0..<barCount, id: \.self) { i in
                 Capsule()
+                    .fill(Color.primary)
                     .frame(width: barWidth, height: barHeight(for: i))
             }
         }
