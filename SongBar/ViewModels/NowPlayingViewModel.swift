@@ -17,7 +17,7 @@ final class NowPlayingViewModel {
     private(set) var copyConfirmation: Bool = false
     private var equalizerFrame: Int = 0
     private var roundedThumbnail: NSImage?
-    private static let indicatorSize = NSSize(width: 9, height: 8)
+    private static let indicatorSize = NSSize(width: 11, height: 12)
 
     var isDraggingSeek: Bool { seekDragState != nil }
 
@@ -210,11 +210,11 @@ final class NowPlayingViewModel {
         switch nowPlaying.playbackState {
         case .playing:
             let frame = equalizerFrame
-            menuBarArtwork = thumbnail.withStateOverlay(indicatorSize: iSize) { origin, sz in
+            menuBarArtwork = thumbnail.withIndicatorOnLeft(indicatorSize: iSize) { origin, sz in
                 NSImage.drawEqualizerBars(frame: frame, at: origin, in: sz)
             }
         case .paused:
-            menuBarArtwork = thumbnail.withStateOverlay(indicatorSize: iSize) { origin, sz in
+            menuBarArtwork = thumbnail.withIndicatorOnLeft(indicatorSize: iSize) { origin, sz in
                 NSImage.drawPauseGlyph(at: origin, in: sz)
             }
         default:

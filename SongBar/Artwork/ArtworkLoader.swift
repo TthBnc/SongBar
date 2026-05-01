@@ -110,23 +110,25 @@ extension NSImage {
         return result
     }
 
-    /// Composite a small state indicator into the bottom-right corner of this
-    /// image and return the combined NSImage.
+    /// Render `[indicator]  [self]` into a single horizontal bitmap and
+    /// return the combined NSImage.
     ///
-    /// MenuBarExtra's label maps to NSStatusItem.button — a single cell that
-    /// holds exactly one image and one title. The SwiftUI bridge silently drops
-    /// every Image past the first, so a second Image(nsImage:) for the state
-    /// indicator never reaches the screen. Folding the indicator into the
-    /// artwork bitmap before SwiftUI sees it bypasses that constraint.
-    ///
-    /// The overlay is drawn white-on-dark so it stays legible against any
-    /// artwork colour without needing template rendering.
-    func withStateOverlay(
+    /// MenuBarExtra's label maps to NSStatusItem.button — one image cell, one
+    /// title cell. The SwiftUI bridge keeps the first Image and first Text
+    /// only, so we can't put separate views side by side. Compositing the
+    /// indicator and the artwork into one bitmap is the only path that lands
+    /// on screen.
+    func withIndicatorOnLeft(
         indicatorSize: NSSize,
+        gap: CGFloat = 5,
         draw indicator: (_ origin: NSPoint, _ size: NSSize) -> Void
     ) -> NSImage {
         guard self.size.width > 0, self.size.height > 0 else { return self }
-        let canvasSize = self.size
+        let height = max(self.size.height, indicatorSize.height)
+        let canvasSize = NSSize(
+            width: indicatorSize.width + gap + self.size.width,
+            height: height
+        )
         let scale: CGFloat = 2
         let pw = Int(canvasSize.width * scale)
         let ph = Int(canvasSize.height * scale)
@@ -150,24 +152,17 @@ extension NSImage {
         defer { NSGraphicsContext.restoreGraphicsState() }
         NSGraphicsContext.current = ctx
 
+        let indicatorY = (canvasSize.height - indicatorSize.height) / 2
+        indicator(NSPoint(x: 0, y: indicatorY), indicatorSize)
+
+        let artworkX = indicatorSize.width + gap
+        let artworkY = (canvasSize.height - self.size.height) / 2
         self.draw(
-            in: NSRect(origin: .zero, size: canvasSize),
+            in: NSRect(origin: NSPoint(x: artworkX, y: artworkY), size: self.size),
             from: .zero,
-            operation: .copy,
+            operation: .sourceOver,
             fraction: 1.0
         )
-
-        let pad: CGFloat = 1.5
-        let badgeW = indicatorSize.width + pad * 2
-        let badgeH = indicatorSize.height + pad * 2
-        let badgeX = canvasSize.width - badgeW
-        let badgeY: CGFloat = 0
-        let badgeRect = NSRect(x: badgeX, y: badgeY, width: badgeW, height: badgeH)
-
-        NSColor(white: 0, alpha: 0.55).setFill()
-        NSBezierPath(roundedRect: badgeRect, xRadius: 2, yRadius: 2).fill()
-
-        indicator(NSPoint(x: badgeX + pad, y: badgeY + pad), indicatorSize)
 
         let result = NSImage(size: canvasSize)
         result.addRepresentation(rep)
@@ -175,7 +170,8 @@ extension NSImage {
     }
 
     /// Draw equalizer bars at `origin` within `size` into the active NSGraphicsContext.
-    /// Bars are drawn white so they show on the dark badge background.
+    /// Drawn in the system label color so the indicator reads correctly on
+    /// both light and dark menu bar backgrounds.
     static func drawEqualizerBars(
         frame: Int,
         at origin: NSPoint,
@@ -186,7 +182,7 @@ extension NSImage {
     ) {
         let totalW = CGFloat(barCount) * barWidth + CGFloat(barCount - 1) * spacing
         let scaleX = size.width / totalW
-        NSColor.white.setFill()
+        NSColor.labelColor.setFill()
         for i in 0..<barCount {
             let t = Double(frame) * 0.55
             let phase = Double(i) * 0.95
@@ -201,11 +197,11 @@ extension NSImage {
     }
 
     /// Draw a pause glyph (two vertical rounded rectangles) at `origin` within
-    /// `size` into the active NSGraphicsContext. Drawn white for the dark badge.
+    /// `size` into the active NSGraphicsContext.
     static func drawPauseGlyph(at origin: NSPoint, in size: NSSize) {
         let pillarW = max(2, size.width * 0.35)
         let gap = size.width - pillarW * 2
-        NSColor.white.setFill()
+        NSColor.labelColor.setFill()
         let leftRect = NSRect(x: origin.x, y: origin.y, width: pillarW, height: size.height)
         let rightRect = NSRect(x: origin.x + pillarW + gap, y: origin.y, width: pillarW, height: size.height)
         NSBezierPath(roundedRect: leftRect, xRadius: pillarW / 2, yRadius: pillarW / 2).fill()
