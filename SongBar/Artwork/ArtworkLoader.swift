@@ -110,62 +110,105 @@ extension NSImage {
         return result
     }
 
-    /// Render an N-bar audio equalizer to a template NSImage. Heights derive
-    /// from sin() with a phase offset per bar, sampled at the given frame
-    /// index so consecutive frames produce smooth motion. `isTemplate = true`
-    /// lets macOS tint the bars to whatever foreground the menu bar wants
-    /// instead of relying on SwiftUI Color.primary, which doesn't render
-    /// reliably inside MenuBarExtra's label.
-    static func equalizerBars(
-        frame: Int,
-        barCount: Int = 4,
-        barWidth: CGFloat = 2,
-        spacing: CGFloat = 1,
-        minHeight: CGFloat = 3,
-        maxHeight: CGFloat = 12
-    ) -> NSImage? {
-        let totalWidth = CGFloat(barCount) * barWidth + CGFloat(barCount - 1) * spacing
-        let canvasSize = NSSize(width: totalWidth, height: maxHeight)
+    /// Composite a small state indicator into the bottom-right corner of this
+    /// image and return the combined NSImage.
+    ///
+    /// MenuBarExtra's label maps to NSStatusItem.button — a single cell that
+    /// holds exactly one image and one title. The SwiftUI bridge silently drops
+    /// every Image past the first, so a second Image(nsImage:) for the state
+    /// indicator never reaches the screen. Folding the indicator into the
+    /// artwork bitmap before SwiftUI sees it bypasses that constraint.
+    ///
+    /// The overlay is drawn white-on-dark so it stays legible against any
+    /// artwork colour without needing template rendering.
+    func withStateOverlay(
+        indicatorSize: NSSize,
+        draw indicator: (_ origin: NSPoint, _ size: NSSize) -> Void
+    ) -> NSImage {
+        guard self.size.width > 0, self.size.height > 0 else { return self }
+        let canvasSize = self.size
         let scale: CGFloat = 2
-        let pixelWidth = Int(canvasSize.width * scale)
-        let pixelHeight = Int(canvasSize.height * scale)
-        guard pixelWidth > 0, pixelHeight > 0 else { return nil }
-        guard let rep = NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: pixelWidth,
-            pixelsHigh: pixelHeight,
-            bitsPerSample: 8,
-            samplesPerPixel: 4,
-            hasAlpha: true,
-            isPlanar: false,
-            colorSpaceName: .deviceRGB,
-            bytesPerRow: 0,
-            bitsPerPixel: 0
-        ) else { return nil }
+        let pw = Int(canvasSize.width * scale)
+        let ph = Int(canvasSize.height * scale)
+        guard pw > 0, ph > 0,
+              let rep = NSBitmapImageRep(
+                bitmapDataPlanes: nil,
+                pixelsWide: pw,
+                pixelsHigh: ph,
+                bitsPerSample: 8,
+                samplesPerPixel: 4,
+                hasAlpha: true,
+                isPlanar: false,
+                colorSpaceName: .deviceRGB,
+                bytesPerRow: 0,
+                bitsPerPixel: 0
+              ) else { return self }
         rep.size = canvasSize
 
-        guard let ctx = NSGraphicsContext(bitmapImageRep: rep) else { return nil }
+        guard let ctx = NSGraphicsContext(bitmapImageRep: rep) else { return self }
         NSGraphicsContext.saveGraphicsState()
         defer { NSGraphicsContext.restoreGraphicsState() }
         NSGraphicsContext.current = ctx
 
-        NSColor.black.setFill()  // template — color doesn't matter, alpha shape does
+        self.draw(
+            in: NSRect(origin: .zero, size: canvasSize),
+            from: .zero,
+            operation: .copy,
+            fraction: 1.0
+        )
 
+        let pad: CGFloat = 1.5
+        let badgeW = indicatorSize.width + pad * 2
+        let badgeH = indicatorSize.height + pad * 2
+        let badgeX = canvasSize.width - badgeW
+        let badgeY: CGFloat = 0
+        let badgeRect = NSRect(x: badgeX, y: badgeY, width: badgeW, height: badgeH)
+
+        NSColor(white: 0, alpha: 0.55).setFill()
+        NSBezierPath(roundedRect: badgeRect, xRadius: 2, yRadius: 2).fill()
+
+        indicator(NSPoint(x: badgeX + pad, y: badgeY + pad), indicatorSize)
+
+        let result = NSImage(size: canvasSize)
+        result.addRepresentation(rep)
+        return result
+    }
+
+    /// Draw equalizer bars at `origin` within `size` into the active NSGraphicsContext.
+    /// Bars are drawn white so they show on the dark badge background.
+    static func drawEqualizerBars(
+        frame: Int,
+        at origin: NSPoint,
+        in size: NSSize,
+        barCount: Int = 4,
+        barWidth: CGFloat = 2,
+        spacing: CGFloat = 1
+    ) {
+        let totalW = CGFloat(barCount) * barWidth + CGFloat(barCount - 1) * spacing
+        let scaleX = size.width / totalW
+        NSColor.white.setFill()
         for i in 0..<barCount {
             let t = Double(frame) * 0.55
             let phase = Double(i) * 0.95
             let normalized = (sin(t + phase) + 1) * 0.5
-            let h = minHeight + CGFloat(normalized) * (maxHeight - minHeight)
-            let x = CGFloat(i) * (barWidth + spacing)
-            let y = (canvasSize.height - h) / 2
-            let rect = NSRect(x: x, y: y, width: barWidth, height: h)
-            let radius = barWidth / 2
-            NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius).fill()
+            let h = 3 + CGFloat(normalized) * (size.height - 3)
+            let x = origin.x + CGFloat(i) * (barWidth + spacing) * scaleX
+            let y = origin.y + (size.height - h) / 2
+            let w = barWidth * scaleX
+            let rect = NSRect(x: x, y: y, width: w, height: h)
+            NSBezierPath(roundedRect: rect, xRadius: w / 2, yRadius: w / 2).fill()
         }
+    }
 
-        let result = NSImage(size: canvasSize)
-        result.addRepresentation(rep)
-        result.isTemplate = true
-        return result
+    /// Draw a pause glyph (two vertical rounded rectangles) at `origin` within
+    /// `size` into the active NSGraphicsContext. Drawn white for the dark badge.
+    static func drawPauseGlyph(at origin: NSPoint, in size: NSSize) {
+        let pillarW = max(2, size.width * 0.35)
+        let gap = size.width - pillarW * 2
+        NSColor.white.setFill()
+        let leftRect = NSRect(x: origin.x, y: origin.y, width: pillarW, height: size.height)
+        let rightRect = NSRect(x: origin.x + pillarW + gap, y: origin.y, width: pillarW, height: size.height)
+        NSBezierPath(roundedRect: leftRect, xRadius: pillarW / 2, yRadius: pillarW / 2).fill()
+        NSBezierPath(roundedRect: rightRect, xRadius: pillarW / 2, yRadius: pillarW / 2).fill()
     }
 }

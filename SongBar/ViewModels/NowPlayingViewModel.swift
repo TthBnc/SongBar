@@ -8,20 +8,16 @@ import os
 final class NowPlayingViewModel {
     private(set) var nowPlaying: NowPlaying = .empty
     private(set) var artwork: NSImage?
+    /// Rounded artwork thumbnail composited with the playback state indicator
+    /// (animated equalizer bars while playing, pause glyph while paused).
+    /// Kept as a single NSImage so MenuBarLabel can use one Image(nsImage:),
+    /// which is all MenuBarExtra's label cell supports reliably.
     private(set) var menuBarArtwork: NSImage?
     private(set) var menuBarTitle: String = "SongBar"
     private(set) var copyConfirmation: Bool = false
-    /// Single NSImage for the menu bar state indicator: an animated
-    /// equalizer while playing, a pause glyph while paused, nil otherwise.
-    /// One stable Image(nsImage:) view in the label avoids SwiftUI
-    /// structural-identity glitches inside MenuBarExtra.
-    private(set) var menuBarStateImage: NSImage?
     private var equalizerFrame: Int = 0
-    private static let pauseIndicator: NSImage? = {
-        let image = NSImage(systemSymbolName: "pause.fill", accessibilityDescription: nil)
-        image?.isTemplate = true
-        return image
-    }()
+    private var roundedThumbnail: NSImage?
+    private static let indicatorSize = NSSize(width: 9, height: 8)
 
     var isDraggingSeek: Bool { seekDragState != nil }
 
@@ -146,6 +142,7 @@ final class NowPlayingViewModel {
         if newArtworkURL != lastArtworkURL {
             lastArtworkURL = newArtworkURL
             artwork = nil
+            roundedThumbnail = nil
             menuBarArtwork = nil
             artworkLoadTask?.cancel()
             if let url = newArtworkURL {
@@ -153,11 +150,13 @@ final class NowPlayingViewModel {
                     let image = await artworkLoader.loadArtwork(from: url)
                     guard let self, !Task.isCancelled, self.lastArtworkURL == url else { return }
                     self.artwork = image
-                    self.menuBarArtwork = image?.roundedThumbnail(size: 18, cornerRadius: 4)
+                    self.roundedThumbnail = image?.roundedThumbnail(size: 18, cornerRadius: 4)
+                    self.rebuildMenuBarArtwork()
                 }
             }
         } else if titleChanged && newArtworkURL == nil {
             artwork = nil
+            roundedThumbnail = nil
             menuBarArtwork = nil
         }
     }
@@ -181,24 +180,45 @@ final class NowPlayingViewModel {
     private func updateEqualizerAnimation() {
         switch nowPlaying.playbackState {
         case .playing:
-            menuBarStateImage = NSImage.equalizerBars(frame: equalizerFrame)
+            rebuildMenuBarArtwork()
             guard equalizerTask == nil else { return }
             equalizerTask = Task { @MainActor [weak self] in
                 while !Task.isCancelled {
                     try? await Task.sleep(for: .milliseconds(180))
                     guard let self, !Task.isCancelled else { return }
                     self.equalizerFrame &+= 1
-                    self.menuBarStateImage = NSImage.equalizerBars(frame: self.equalizerFrame)
+                    self.rebuildMenuBarArtwork()
                 }
             }
         case .paused:
             equalizerTask?.cancel()
             equalizerTask = nil
-            menuBarStateImage = Self.pauseIndicator
+            rebuildMenuBarArtwork()
         default:
             equalizerTask?.cancel()
             equalizerTask = nil
-            menuBarStateImage = nil
+            rebuildMenuBarArtwork()
+        }
+    }
+
+    private func rebuildMenuBarArtwork() {
+        guard let thumbnail = roundedThumbnail else {
+            menuBarArtwork = nil
+            return
+        }
+        let iSize = Self.indicatorSize
+        switch nowPlaying.playbackState {
+        case .playing:
+            let frame = equalizerFrame
+            menuBarArtwork = thumbnail.withStateOverlay(indicatorSize: iSize) { origin, sz in
+                NSImage.drawEqualizerBars(frame: frame, at: origin, in: sz)
+            }
+        case .paused:
+            menuBarArtwork = thumbnail.withStateOverlay(indicatorSize: iSize) { origin, sz in
+                NSImage.drawPauseGlyph(at: origin, in: sz)
+            }
+        default:
+            menuBarArtwork = thumbnail
         }
     }
 

@@ -19,11 +19,8 @@ private struct MenuBarLabel: View {
 
     var body: some View {
         HStack(spacing: 5) {
-            if let thumbnail = viewModel.menuBarArtwork {
-                Image(nsImage: thumbnail)
-            }
-            if let stateImage = viewModel.menuBarStateImage {
-                Image(nsImage: stateImage)
+            if let composite = viewModel.menuBarArtwork {
+                Image(nsImage: composite)
             }
             Text(viewModel.menuBarTitle)
         }
