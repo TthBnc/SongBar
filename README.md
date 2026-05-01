@@ -2,35 +2,51 @@
 
 A minimal macOS menu bar now-playing app for Spotify.
 
-SongBar puts the current artist and song title in your menu bar. Click it to open a compact native panel with playback controls, album artwork, a progress slider, and quick links to open or share the current track.
+SongBar puts the current artist and song title in your menu bar. Click it for a compact panel with album art, a progress slider, playback controls, and quick actions to open or share the current track.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-macOS%2014+-blue)
-![Swift](https://img.shields.io/badge/Swift-5%2B-orange)
 
 ## Features
 
-- Always-visible artist – song title in the menu bar (truncated to 48 chars)
-- Native popover panel with album artwork, progress slider, and seek
-- Play / pause / next / previous controls
-- Open Spotify, open the current track, copy a public share link
-- Adaptive polling (1 s while playing, 3 s otherwise) for low CPU use
+- Album art + artist – song title visible in your menu bar
+- Animated equalizer indicator while music plays
+- Native popover panel: artwork, progress slider, prev / play / next, share actions
+- Adaptive polling — 1 s while playing, 3 s otherwise — so it stays light on battery
 - No Dock icon, no login, no analytics, no telemetry
-- No Spotify Web API — talks to your local Spotify desktop app
+- Talks only to the **local** Spotify desktop app via Apple Events. Your Spotify credentials never leave Spotify.
 
-## Status
+## Install
 
-Pre-release (v0.1). The product spec lives in [`docs/SongBar-PRD.md`](docs/SongBar-PRD.md).
+1. Download the latest `SongBar-x.y.z.dmg` from the [Releases](https://github.com/TthBnc/SongBar/releases) page.
+2. Open the dmg and drag **SongBar** into your **Applications** folder.
+3. Open Applications, **right-click SongBar** and choose **Open**. macOS will warn that the developer can't be verified — that's expected for an unsigned open-source app. Click **Open** to confirm.
+4. Look for SongBar in your menu bar — top-right of the screen, near the clock.
+
+> Right-click → Open is only needed once. After that you can launch it normally. This is unsigned because we don't yet have an Apple Developer ID; once we do, the warning will go away.
+
+## First-run permission
+
+The first time SongBar tries to read or control Spotify, macOS will prompt you to grant **Automation** permission so SongBar can talk to the Spotify app. Click **Allow**.
+
+If you accidentally deny, re-enable it in **System Settings → Privacy & Security → Automation**, find SongBar in the list, and toggle Spotify on.
+
+See [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) if anything goes sideways.
 
 ## Requirements
 
 - macOS 14 (Sonoma) or later
-- Xcode 16 or later (only needed to build from source)
-- The Spotify desktop app installed and signed in
+- The [Spotify desktop app](https://www.spotify.com/download) installed and signed in
 
-SongBar talks to your local Spotify desktop app over Apple Events. It does **not** use the Spotify Web API and does **not** ask you for a Spotify login.
+SongBar does not work with the web player or Spotify Connect playback on a remote device — it reads the local desktop app.
 
-## Building from source
+## Privacy
+
+- SongBar **doesn't** ask for your Spotify password. It never sees one.
+- SongBar **doesn't** send your listening history anywhere. There is no server, no analytics, no telemetry.
+- Album artwork is downloaded directly from Spotify's CDN to render the panel — that's the only network traffic the app makes.
+
+## Build from source
 
 ```sh
 git clone https://github.com/TthBnc/SongBar.git
@@ -38,78 +54,15 @@ cd SongBar
 open SongBar.xcodeproj
 ```
 
-Build and run the `SongBar` scheme. The app installs itself in the menu bar; there is no Dock icon.
+Build and run the `SongBar` scheme in Xcode 16 or later.
 
-To run the unit tests from the command line:
+To run unit tests from the command line:
 
 ```sh
 xcodebuild -scheme SongBar -configuration Debug -destination 'platform=macOS' test
 ```
 
-## First-run permission
-
-The first time SongBar tries to read or control Spotify, macOS will prompt you to grant **Automation** permission. Allow it.
-
-If you accidentally deny, re-enable it in **System Settings → Privacy & Security → Automation**, find SongBar, and toggle Spotify on.
-
-See [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) for details.
-
-## How it works
-
-SongBar uses SwiftUI's `MenuBarExtra(.window)` for the menu bar item and panel, and an `actor`-based `AppleEventsSpotifyClient` that drives the local Spotify app via cached `NSAppleScript` instances. A small `ArtworkLoader` actor caches album art in memory. The view model polls Spotify on an adaptive interval and keeps the panel responsive across track changes, paused state, denied permission, and Spotify-not-running.
-
-Source layout:
-
-```
-SongBar/
-├── SongBarApp.swift           App + MenuBarExtra
-├── Models/                    NowPlaying, PlaybackState, SpotifyAvailability
-├── Spotify/                   SpotifyClient protocol + Apple Events impl
-├── Artwork/                   ArtworkLoader actor
-├── ViewModels/                NowPlayingViewModel (@Observable, @MainActor)
-├── Views/                     Panel, controls, slider, banners
-├── MenuBar/                   Menu bar title formatter
-└── Utilities/                 Time formatter
-```
-
-## Building a .dmg
-
-To produce a distributable disk image:
-
-```sh
-./scripts/build-dmg.sh
-# → dist/SongBar-<version>.dmg
-```
-
-By default the script ad-hoc signs the app. The .dmg works locally but Gatekeeper will warn the first time a user opens it. To bypass once, right-click the app and choose **Open**.
-
-### With an Apple Developer ID
-
-When you have a "Developer ID Application" certificate, set:
-
-```sh
-export DEVELOPER_ID_APPLICATION="Developer ID Application: Your Name (TEAM12345)"
-./scripts/build-dmg.sh
-```
-
-The script enables hardened runtime, signs the app and the .dmg, and the result is shareable without the Gatekeeper warning (provided the user has internet to fetch the certificate revocation list).
-
-### Notarization
-
-To also notarize and staple, store credentials once with `xcrun notarytool` and pass the keychain profile name:
-
-```sh
-xcrun notarytool store-credentials "AC_PROFILE" \
-    --apple-id "you@example.com" \
-    --team-id "TEAM12345" \
-    --password "<app-specific password>"
-
-export DEVELOPER_ID_APPLICATION="Developer ID Application: Your Name (TEAM12345)"
-export NOTARY_PROFILE="AC_PROFILE"
-./scripts/build-dmg.sh
-```
-
-The script submits the .dmg, waits for the Apple notary service, and staples the ticket.
+For details on packaging a `.dmg` (signed or unsigned), see [`CONTRIBUTING.md`](CONTRIBUTING.md#packaging-a-dmg).
 
 ## Contributing
 

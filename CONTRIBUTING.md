@@ -39,7 +39,65 @@ Open a GitHub issue with:
 
 ## Project structure
 
-See [README.md](README.md#how-it-works) for the source layout. New files require updates to `SongBar.xcodeproj/project.pbxproj` (the file references and the appropriate `PBXSourcesBuildPhase`).
+```
+SongBar/
+├── SongBarApp.swift           App + MenuBarExtra
+├── Models/                    NowPlaying, PlaybackState, SpotifyAvailability
+├── Spotify/                   SpotifyClient protocol + Apple Events impl
+├── Artwork/                   ArtworkLoader actor + NSImage helpers
+├── ViewModels/                NowPlayingViewModel (@Observable, @MainActor)
+├── Views/                     Panel, controls, slider, banners
+├── MenuBar/                   Menu bar title formatter
+└── Utilities/                 Time formatter
+```
+
+New files require updates to `SongBar.xcodeproj/project.pbxproj` (the file references and the appropriate `PBXSourcesBuildPhase`).
+
+## Packaging a dmg
+
+To produce a distributable `.dmg`:
+
+```sh
+./scripts/build-dmg.sh
+# → dist/SongBar-<version>.dmg
+```
+
+By default the script ad-hoc signs the app. The dmg installs locally but Gatekeeper warns the first time a user opens it. Right-click the app and choose **Open** to bypass that warning once.
+
+### Signing with a Developer ID
+
+When the project has access to an Apple "Developer ID Application" certificate, set:
+
+```sh
+export DEVELOPER_ID_APPLICATION="Developer ID Application: Your Name (TEAM12345)"
+./scripts/build-dmg.sh
+```
+
+The script enables hardened runtime, signs the app and the dmg with a secure timestamp, and the result opens without a Gatekeeper warning.
+
+### Notarization
+
+To also notarize and staple, store credentials once with `xcrun notarytool` and pass the keychain profile name:
+
+```sh
+xcrun notarytool store-credentials "AC_PROFILE" \
+    --apple-id "you@example.com" \
+    --team-id "TEAM12345" \
+    --password "<app-specific password>"
+
+export DEVELOPER_ID_APPLICATION="Developer ID Application: Your Name (TEAM12345)"
+export NOTARY_PROFILE="AC_PROFILE"
+./scripts/build-dmg.sh
+```
+
+The script submits the dmg, waits for the Apple notary service, and staples the ticket.
+
+### Cutting a release
+
+1. Bump `MARKETING_VERSION` in `SongBar.xcodeproj/project.pbxproj` (currently `0.1.0`).
+2. Run `./scripts/build-dmg.sh` (with signing/notarization env vars if available).
+3. Tag and push: `git tag v0.1.0 && git push --tags`.
+4. Upload via `gh release create v0.1.0 dist/SongBar-0.1.0.dmg --notes "..."`.
 
 ## Areas welcome to contributions
 
