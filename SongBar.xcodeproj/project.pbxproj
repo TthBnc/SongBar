@@ -1,0 +1,574 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 70;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1B0000000000000000000A1 /* SongBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000A1 /* SongBarApp.swift */; };
+		A1B0000000000000000000A2 /* PlaybackState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000A2 /* PlaybackState.swift */; };
+		A1B0000000000000000000A3 /* NowPlaying.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000A3 /* NowPlaying.swift */; };
+		A1B0000000000000000000A4 /* SpotifyClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000A4 /* SpotifyClient.swift */; };
+		A1B0000000000000000000A5 /* AppleEventsSpotifyClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000A5 /* AppleEventsSpotifyClient.swift */; };
+		A1B0000000000000000000A6 /* SpotifyURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000A6 /* SpotifyURL.swift */; };
+		A1B0000000000000000000A7 /* ArtworkLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000A7 /* ArtworkLoader.swift */; };
+		A1B0000000000000000000A8 /* NowPlayingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000A8 /* NowPlayingViewModel.swift */; };
+		A1B0000000000000000000A9 /* NowPlayingPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000A9 /* NowPlayingPanel.swift */; };
+		A1B0000000000000000000AA /* ArtworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000AA /* ArtworkView.swift */; };
+		A1B0000000000000000000AB /* PlaybackControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000AB /* PlaybackControls.swift */; };
+		A1B0000000000000000000AC /* ProgressSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000AC /* ProgressSlider.swift */; };
+		A1B0000000000000000000AD /* ActionsRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000AD /* ActionsRow.swift */; };
+		A1B0000000000000000000AE /* ErrorBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000AE /* ErrorBanner.swift */; };
+		A1B0000000000000000000AF /* MenuBarTitleFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000AF /* MenuBarTitleFormatter.swift */; };
+		A1B0000000000000000000B0 /* TimeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000B0 /* TimeFormatter.swift */; };
+		A2B0000000000000000000A1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2F0000000000000000000A1 /* Assets.xcassets */; };
+		B1B0000000000000000000A1 /* SpotifyURLTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1F0000000000000000000A1 /* SpotifyURLTests.swift */; };
+		B1B0000000000000000000A2 /* TimeFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1F0000000000000000000A2 /* TimeFormatterTests.swift */; };
+		B1B0000000000000000000A3 /* MenuBarTitleFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1F0000000000000000000A3 /* MenuBarTitleFormatterTests.swift */; };
+		B1B0000000000000000000A4 /* SeekClampingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1F0000000000000000000A4 /* SeekClampingTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A1F0000000000000000000A1 /* SongBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongBarApp.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000A2 /* PlaybackState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackState.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000A3 /* NowPlaying.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlaying.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000A4 /* SpotifyClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyClient.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000A5 /* AppleEventsSpotifyClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleEventsSpotifyClient.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000A6 /* SpotifyURL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyURL.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000A7 /* ArtworkLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkLoader.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000A8 /* NowPlayingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingViewModel.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000A9 /* NowPlayingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingPanel.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000AA /* ArtworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkView.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000AB /* PlaybackControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackControls.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000AC /* ProgressSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressSlider.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000AD /* ActionsRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionsRow.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000AE /* ErrorBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorBanner.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000AF /* MenuBarTitleFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarTitleFormatter.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000B0 /* TimeFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatter.swift; sourceTree = "<group>"; };
+		A2F0000000000000000000A1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A3F0000000000000000000A1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A3F0000000000000000000A2 /* SongBar.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SongBar.entitlements; sourceTree = "<group>"; };
+		B1F0000000000000000000A1 /* SpotifyURLTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyURLTests.swift; sourceTree = "<group>"; };
+		B1F0000000000000000000A2 /* TimeFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatterTests.swift; sourceTree = "<group>"; };
+		B1F0000000000000000000A3 /* MenuBarTitleFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarTitleFormatterTests.swift; sourceTree = "<group>"; };
+		B1F0000000000000000000A4 /* SeekClampingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekClampingTests.swift; sourceTree = "<group>"; };
+		C0F0000000000000000000A1 /* SongBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SongBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C0F0000000000000000000A2 /* SongBarTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SongBarTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C0B0000000000000000000A1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0B0000000000000000000A2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		G0F0000000000000000000A1 /* Project */ = {
+			isa = PBXGroup;
+			children = (
+				G0F0000000000000000000A2 /* SongBar */,
+				G0F0000000000000000000A3 /* SongBarTests */,
+				G0F0000000000000000000A4 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		G0F0000000000000000000A2 /* SongBar */ = {
+			isa = PBXGroup;
+			children = (
+				A1F0000000000000000000A1 /* SongBarApp.swift */,
+				G0F0000000000000000000A5 /* Models */,
+				G0F0000000000000000000A6 /* Spotify */,
+				G0F0000000000000000000A7 /* Artwork */,
+				G0F0000000000000000000A8 /* ViewModels */,
+				G0F0000000000000000000A9 /* Views */,
+				G0F0000000000000000000AA /* MenuBar */,
+				G0F0000000000000000000AB /* Utilities */,
+				G0F0000000000000000000AC /* Resources */,
+				A3F0000000000000000000A1 /* Info.plist */,
+				A3F0000000000000000000A2 /* SongBar.entitlements */,
+			);
+			path = SongBar;
+			sourceTree = "<group>";
+		};
+		G0F0000000000000000000A3 /* SongBarTests */ = {
+			isa = PBXGroup;
+			children = (
+				B1F0000000000000000000A1 /* SpotifyURLTests.swift */,
+				B1F0000000000000000000A2 /* TimeFormatterTests.swift */,
+				B1F0000000000000000000A3 /* MenuBarTitleFormatterTests.swift */,
+				B1F0000000000000000000A4 /* SeekClampingTests.swift */,
+			);
+			path = SongBarTests;
+			sourceTree = "<group>";
+		};
+		G0F0000000000000000000A4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C0F0000000000000000000A1 /* SongBar.app */,
+				C0F0000000000000000000A2 /* SongBarTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		G0F0000000000000000000A5 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A1F0000000000000000000A2 /* PlaybackState.swift */,
+				A1F0000000000000000000A3 /* NowPlaying.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		G0F0000000000000000000A6 /* Spotify */ = {
+			isa = PBXGroup;
+			children = (
+				A1F0000000000000000000A4 /* SpotifyClient.swift */,
+				A1F0000000000000000000A5 /* AppleEventsSpotifyClient.swift */,
+				A1F0000000000000000000A6 /* SpotifyURL.swift */,
+			);
+			path = Spotify;
+			sourceTree = "<group>";
+		};
+		G0F0000000000000000000A7 /* Artwork */ = {
+			isa = PBXGroup;
+			children = (
+				A1F0000000000000000000A7 /* ArtworkLoader.swift */,
+			);
+			path = Artwork;
+			sourceTree = "<group>";
+		};
+		G0F0000000000000000000A8 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				A1F0000000000000000000A8 /* NowPlayingViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		G0F0000000000000000000A9 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A1F0000000000000000000A9 /* NowPlayingPanel.swift */,
+				A1F0000000000000000000AA /* ArtworkView.swift */,
+				A1F0000000000000000000AB /* PlaybackControls.swift */,
+				A1F0000000000000000000AC /* ProgressSlider.swift */,
+				A1F0000000000000000000AD /* ActionsRow.swift */,
+				A1F0000000000000000000AE /* ErrorBanner.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		G0F0000000000000000000AA /* MenuBar */ = {
+			isa = PBXGroup;
+			children = (
+				A1F0000000000000000000AF /* MenuBarTitleFormatter.swift */,
+			);
+			path = MenuBar;
+			sourceTree = "<group>";
+		};
+		G0F0000000000000000000AB /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				A1F0000000000000000000B0 /* TimeFormatter.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		G0F0000000000000000000AC /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A2F0000000000000000000A1 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C0T0000000000000000000A1 /* SongBar */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D0L0000000000000000000A2 /* Build configuration list for PBXNativeTarget "SongBar" */;
+			buildPhases = (
+				C0S0000000000000000000A1 /* Sources */,
+				C0R0000000000000000000A1 /* Resources */,
+				C0B0000000000000000000A1 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SongBar;
+			productName = SongBar;
+			productReference = C0F0000000000000000000A1 /* SongBar.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C0T0000000000000000000A2 /* SongBarTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D0L0000000000000000000A3 /* Build configuration list for PBXNativeTarget "SongBarTests" */;
+			buildPhases = (
+				C0S0000000000000000000A2 /* Sources */,
+				C0B0000000000000000000A2 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C0D0000000000000000000A1 /* PBXTargetDependency */,
+			);
+			name = SongBarTests;
+			productName = SongBarTests;
+			productReference = C0F0000000000000000000A2 /* SongBarTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		P0J0000000000000000000A1 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					C0T0000000000000000000A1 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					C0T0000000000000000000A2 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = C0T0000000000000000000A1;
+					};
+				};
+			};
+			buildConfigurationList = D0L0000000000000000000A1 /* Build configuration list for PBXProject "SongBar" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = G0F0000000000000000000A1;
+			productRefGroup = G0F0000000000000000000A4 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C0T0000000000000000000A1 /* SongBar */,
+				C0T0000000000000000000A2 /* SongBarTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C0R0000000000000000000A1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A2B0000000000000000000A1 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C0S0000000000000000000A1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B0000000000000000000A1 /* SongBarApp.swift in Sources */,
+				A1B0000000000000000000A2 /* PlaybackState.swift in Sources */,
+				A1B0000000000000000000A3 /* NowPlaying.swift in Sources */,
+				A1B0000000000000000000A4 /* SpotifyClient.swift in Sources */,
+				A1B0000000000000000000A5 /* AppleEventsSpotifyClient.swift in Sources */,
+				A1B0000000000000000000A6 /* SpotifyURL.swift in Sources */,
+				A1B0000000000000000000A7 /* ArtworkLoader.swift in Sources */,
+				A1B0000000000000000000A8 /* NowPlayingViewModel.swift in Sources */,
+				A1B0000000000000000000A9 /* NowPlayingPanel.swift in Sources */,
+				A1B0000000000000000000AA /* ArtworkView.swift in Sources */,
+				A1B0000000000000000000AB /* PlaybackControls.swift in Sources */,
+				A1B0000000000000000000AC /* ProgressSlider.swift in Sources */,
+				A1B0000000000000000000AD /* ActionsRow.swift in Sources */,
+				A1B0000000000000000000AE /* ErrorBanner.swift in Sources */,
+				A1B0000000000000000000AF /* MenuBarTitleFormatter.swift in Sources */,
+				A1B0000000000000000000B0 /* TimeFormatter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0S0000000000000000000A2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1B0000000000000000000A1 /* SpotifyURLTests.swift in Sources */,
+				B1B0000000000000000000A2 /* TimeFormatterTests.swift in Sources */,
+				B1B0000000000000000000A3 /* MenuBarTitleFormatterTests.swift in Sources */,
+				B1B0000000000000000000A4 /* SeekClampingTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C0D0000000000000000000A1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C0T0000000000000000000A1 /* SongBar */;
+			targetProxy = C0P0000000000000000000A1 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXContainerItemProxy section */
+		C0P0000000000000000000A1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = P0J0000000000000000000A1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C0T0000000000000000000A1;
+			remoteInfo = SongBar;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin XCBuildConfiguration section */
+		D0C0000000000000000000A1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		D0C0000000000000000000A2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		D0C0000000000000000000A3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = SongBar/SongBar.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SongBar/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.tothbnc.SongBar";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		D0C0000000000000000000A4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = SongBar/SongBar.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SongBar/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.tothbnc.SongBar";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		D0C0000000000000000000A5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.tothbnc.SongBarTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SongBar.app/Contents/MacOS/SongBar";
+			};
+			name = Debug;
+		};
+		D0C0000000000000000000A6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "dev.tothbnc.SongBarTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SongBar.app/Contents/MacOS/SongBar";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D0L0000000000000000000A1 /* Build configuration list for PBXProject "SongBar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D0C0000000000000000000A1 /* Debug */,
+				D0C0000000000000000000A2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D0L0000000000000000000A2 /* Build configuration list for PBXNativeTarget "SongBar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D0C0000000000000000000A3 /* Debug */,
+				D0C0000000000000000000A4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D0L0000000000000000000A3 /* Build configuration list for PBXNativeTarget "SongBarTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D0C0000000000000000000A5 /* Debug */,
+				D0C0000000000000000000A6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = P0J0000000000000000000A1 /* Project object */;
+}
