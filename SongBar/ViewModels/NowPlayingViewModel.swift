@@ -149,7 +149,7 @@ final class NowPlayingViewModel {
     }
 
     private func clamp(_ seconds: TimeInterval) -> TimeInterval {
-        guard seconds.isFinite else { return 0 }
+        guard !seconds.isNaN else { return 0 }
         let lower = max(0, seconds)
         guard nowPlaying.duration > 0 else { return lower }
         return min(lower, nowPlaying.duration)
