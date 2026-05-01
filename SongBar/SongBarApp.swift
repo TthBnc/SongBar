@@ -32,11 +32,9 @@ private struct MenuBarLabel: View {
     private var stateIndicator: some View {
         switch viewModel.nowPlaying.playbackState {
         case .playing:
-            // 5 fps frame counter on the view model drives the bar heights.
-            // Only ticks while playing — paused/stopped/etc burn zero menu
-            // bar updates. TimelineView is intentionally NOT used here.
-            EqualizerBars(frame: viewModel.equalizerFrame)
-                .frame(width: 12, height: 13)
+            if let bars = viewModel.menuBarEqualizerImage {
+                Image(nsImage: bars)
+            }
         case .paused:
             Image(systemName: "pause.fill")
                 .font(.system(size: 10, weight: .semibold))
@@ -54,29 +52,3 @@ private struct MenuBarLabel: View {
     }
 }
 
-private struct EqualizerBars: View {
-    let frame: Int
-
-    private let barCount = 4
-    private let barWidth: CGFloat = 2
-    private let spacing: CGFloat = 1
-    private let minHeight: CGFloat = 3
-    private let maxHeight: CGFloat = 12
-
-    var body: some View {
-        HStack(alignment: .center, spacing: spacing) {
-            ForEach(0..<barCount, id: \.self) { i in
-                Capsule()
-                    .fill(Color.primary)
-                    .frame(width: barWidth, height: barHeight(for: i))
-            }
-        }
-    }
-
-    private func barHeight(for index: Int) -> CGFloat {
-        let t = Double(frame) * 0.55
-        let phase = Double(index) * 0.95
-        let normalized = (sin(t + phase) + 1) * 0.5
-        return minHeight + CGFloat(normalized) * (maxHeight - minHeight)
-    }
-}

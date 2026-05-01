@@ -11,10 +11,12 @@ final class NowPlayingViewModel {
     private(set) var menuBarArtwork: NSImage?
     private(set) var menuBarTitle: String = "SongBar"
     private(set) var copyConfirmation: Bool = false
-    /// Monotonically increasing frame counter for the menu bar equalizer
-    /// animation. Increments only while `playbackState == .playing`.
-    /// Read by the equalizer view to derive bar heights from sin().
-    private(set) var equalizerFrame: Int = 0
+    /// Pre-rasterized equalizer bars NSImage. Updated on each animation
+    /// frame while playing; nil otherwise. Rendered in the menu bar via
+    /// Image(nsImage:) so we don't depend on SwiftUI shape colors inside
+    /// MenuBarExtra's label rendering.
+    private(set) var menuBarEqualizerImage: NSImage?
+    private var equalizerFrame: Int = 0
 
     var isDraggingSeek: Bool { seekDragState != nil }
 
@@ -174,17 +176,22 @@ final class NowPlayingViewModel {
     private func updateEqualizerAnimation() {
         let shouldAnimate = nowPlaying.playbackState == .playing
         if shouldAnimate {
+            if menuBarEqualizerImage == nil {
+                menuBarEqualizerImage = NSImage.equalizerBars(frame: equalizerFrame)
+            }
             guard equalizerTask == nil else { return }
             equalizerTask = Task { @MainActor [weak self] in
                 while !Task.isCancelled {
                     try? await Task.sleep(for: .milliseconds(180))
                     guard let self, !Task.isCancelled else { return }
                     self.equalizerFrame &+= 1
+                    self.menuBarEqualizerImage = NSImage.equalizerBars(frame: self.equalizerFrame)
                 }
             }
         } else {
             equalizerTask?.cancel()
             equalizerTask = nil
+            menuBarEqualizerImage = nil
         }
     }
 
