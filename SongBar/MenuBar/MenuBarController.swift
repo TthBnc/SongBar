@@ -245,23 +245,32 @@ final class MenuBarController {
         let artwork = viewModel.menuBarArtwork
         let newWidth = MenuBarRenderer.measure(artwork: artwork, title: newTitle)
 
-        if newTitle == lastTitle {
-            // Same title — just refresh the bitmap (handles equalizer ticks without animating)
-            renderAndApply(width: currentWidth > 0 ? currentWidth : newWidth, oldTitle: nil, t: 1)
-            return
-        }
-
+        let titleChanged = newTitle != lastTitle
+        let widthDelta = abs(newWidth - currentWidth)
         let oldTitle = lastTitle
         lastTitle = newTitle
 
-        // First paint or tiny delta: no animation
-        if oldTitle.isEmpty || abs(newWidth - currentWidth) < 4 {
+        // No-op refresh: same title AND width didn't materially change.
+        // This is the equalizer-tick path — just rebind image/title at current width.
+        if !titleChanged && widthDelta < 1 {
+            renderAndApply(width: newWidth, oldTitle: nil, t: 1)
+            return
+        }
+
+        // First paint, or change too small to be worth animating: snap.
+        // Critical: use newWidth here, not currentWidth — when artwork arrives
+        // after a title-only render, currentWidth is stale-narrow and would
+        // clip the now-wider content (image + title) producing a visible-but-
+        // truncated title or no title at all.
+        if oldTitle.isEmpty || widthDelta < 4 {
             animator?.cancel()
             animator = nil
             renderAndApply(width: newWidth, oldTitle: nil, t: 1)
             return
         }
 
+        // Worth animating: title swap, or artwork arriving/leaving with a
+        // meaningful width delta.
         let startWidth = currentWidth > 0 ? currentWidth : newWidth
         animator?.cancel()
         animator = WidthAnimator(
