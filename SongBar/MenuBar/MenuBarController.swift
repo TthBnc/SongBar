@@ -38,9 +38,14 @@ enum MenuBarRenderer {
     }
 
     private static func textAttributes(alpha: CGFloat = 1) -> [NSAttributedString.Key: Any] {
+        // Hardcoded white. NSColor.labelColor would be appearance-adaptive,
+        // but baked into a bitmap once the color is fixed — in light system
+        // appearance it resolved to near-black and disappeared on the dark
+        // translucent menu bar. White matches our other indicator elements
+        // (bars, pause glyph) and reads on every menu bar background.
         [
             .font: NSFont.menuBarFont(ofSize: 0),
-            .foregroundColor: NSColor.labelColor.withAlphaComponent(alpha),
+            .foregroundColor: NSColor.white.withAlphaComponent(alpha),
         ]
     }
 
@@ -74,7 +79,9 @@ enum MenuBarRenderer {
 
         let font = NSFont.menuBarFont(ofSize: 0)
         let fontHeight = font.ascender - font.descender
-        let textY = (height - fontHeight) / 2 + font.descender
+        // Subtract (negative) descender to lift the baseline so the visible
+        // glyph block (descender↔ascender) is vertically centered.
+        let textY = (height - fontHeight) / 2 - font.descender
         (title as NSString).draw(at: NSPoint(x: 0, y: textY), withAttributes: textAttributes())
 
         let result = NSImage(size: NSSize(width: width, height: height))
@@ -205,7 +212,9 @@ enum MenuBarRenderer {
 
         let font = NSFont.menuBarFont(ofSize: 0)
         let fontHeight = font.ascender - font.descender
-        let textY = (height - fontHeight) / 2 + font.descender
+        // Subtract (negative) descender to lift the baseline so the visible
+        // glyph block (descender↔ascender) is vertically centered.
+        let textY = (height - fontHeight) / 2 - font.descender
 
         // Draw old title fading out
         if let old = oldTitle, t < 1.0 {
@@ -353,6 +362,9 @@ final class MenuBarController {
         guard let button = statusItem.button else { return }
         button.target = self
         button.action = #selector(statusItemClicked(_:))
+        // Image-only so the cell doesn't add space for an absent title and
+        // doesn't try to lay out a separate text label next to our bitmap.
+        button.imagePosition = .imageOnly
         // Receive both left and right mouse-up so we can distinguish them in the handler
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
     }
