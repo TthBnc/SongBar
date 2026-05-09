@@ -13,8 +13,9 @@ import os
 enum MenuBarRenderer {
     /// Total horizontal padding the NSStatusBarButton cell adds around its
     /// content (image + title). Measured empirically — gives enough room so
-    /// the title isn't clipped at the natural-fit length.
-    private static let cellPadding: CGFloat = 12
+    /// the title isn't clipped or wrapped to a second line at the
+    /// natural-fit length.
+    private static let cellPadding: CGFloat = 18
     /// Spacing the cell inserts between the image and the title when
     /// imagePosition is .imageLeading and imageHugsTitle is true.
     private static let imageTitleSpacing: CGFloat = 4
@@ -158,8 +159,27 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         // composite NSImage handle artwork + indicator.
         button.imagePosition = .imageLeading
         button.imageHugsTitle = true
+        // Disallow multi-line wrapping at the cell level. Without this the
+        // cell grows vertically when the title is just-too-long, which
+        // pushes the popover anchor below the menu bar.
+        button.cell?.usesSingleLineMode = true
+        button.cell?.wraps = false
+        button.cell?.lineBreakMode = .byTruncatingTail
         // Receive both left and right mouse-up so we can distinguish them in the handler
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+    }
+
+    private static func attributedTitle(for title: String) -> NSAttributedString {
+        let style = NSMutableParagraphStyle()
+        style.lineBreakMode = .byTruncatingTail
+        return NSAttributedString(
+            string: title,
+            attributes: [
+                .font: NSFont.menuBarFont(ofSize: 0),
+                .foregroundColor: NSColor.labelColor,
+                .paragraphStyle: style
+            ]
+        )
     }
 
     private func setupPopover() {
@@ -332,13 +352,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         } else {
             statusItem.button?.image = nil
         }
-        statusItem.button?.attributedTitle = NSAttributedString(
-            string: title,
-            attributes: [
-                .font: NSFont.menuBarFont(ofSize: 0),
-                .foregroundColor: NSColor.labelColor
-            ]
-        )
+        statusItem.button?.attributedTitle = Self.attributedTitle(for: title)
     }
 
     private func renderAndApply(width: CGFloat, oldTitle: String?, t: Double) {
@@ -355,13 +369,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
 
         // Native button-title rendering. Always appearance-correct, never
         // template-tinted away.
-        statusItem.button?.attributedTitle = NSAttributedString(
-            string: title,
-            attributes: [
-                .font: NSFont.menuBarFont(ofSize: 0),
-                .foregroundColor: NSColor.labelColor
-            ]
-        )
+        statusItem.button?.attributedTitle = Self.attributedTitle(for: title)
 
         // Width is animated independently of content. While `statusItem.length`
         // is below the natural fit, the title text gets clipped on the right —
