@@ -6,243 +6,32 @@ import os
 
 // MARK: - MenuBarRenderer
 
-/// Pure, stateless renderer. Composites the existing menuBarArtwork bitmap
-/// (artwork + indicator, already produced by NowPlayingViewModel) with the
-/// title string at an arbitrary target width, optionally crossfading between
-/// an old and a new title during a width animation.
+/// Width measurement for the status bar item. Drawing of the title is now
+/// done by NSStatusBarButton's own attributedTitle rendering (so the system
+/// handles appearance, vibrancy, and template tinting correctly); this enum
+/// just predicts the natural width so we can animate `statusItem.length`.
 enum MenuBarRenderer {
-    private static let barHeight: CGFloat = 22
-    private static let artworkToTextGap: CGFloat = 6
-    private static let scale: CGFloat = 2
+    /// Total horizontal padding the NSStatusBarButton cell adds around its
+    /// content (image + title). Measured empirically — gives enough room so
+    /// the title isn't clipped at the natural-fit length.
+    private static let cellPadding: CGFloat = 12
+    /// Spacing the cell inserts between the image and the title when
+    /// imagePosition is .imageLeading and imageHugsTitle is true.
+    private static let imageTitleSpacing: CGFloat = 4
 
-    /// Approximate width of the artwork section (indicator + gap + thumbnail)
-    /// as produced by NowPlayingViewModel. We derive this from the image itself
-    /// at render time rather than hardcoding, so it adapts automatically.
-    private static func artworkWidth(for artwork: NSImage?) -> CGFloat {
-        artwork?.size.width ?? 0
-    }
-
-    /// Natural total width for a given menuBarArtwork + title combination.
+    /// Natural total length the status item should adopt for a given artwork +
+    /// title combination. Animator interpolates between the old and new value.
     static func measure(artwork: NSImage?, title: String) -> CGFloat {
-        let aw = artworkWidth(for: artwork)
-        let textWidth = titleTextWidth(title)
+        let aw = artwork?.size.width ?? 0
+        let titleWidth = ceil((title as NSString).size(withAttributes: [
+            .font: NSFont.menuBarFont(ofSize: 0)
+        ]).width)
         if aw > 0 {
-            return aw + artworkToTextGap + textWidth
+            return aw + imageTitleSpacing + titleWidth + cellPadding
         }
-        return textWidth
+        return titleWidth + cellPadding
     }
 
-    private static func titleTextWidth(_ title: String) -> CGFloat {
-        let attrs = textAttributes()
-        let size = (title as NSString).size(withAttributes: attrs)
-        return ceil(size.width)
-    }
-
-    private static func textAttributes(alpha: CGFloat = 1) -> [NSAttributedString.Key: Any] {
-        // Hardcoded white. NSColor.labelColor would be appearance-adaptive,
-        // but baked into a bitmap once the color is fixed — in light system
-        // appearance it resolved to near-black and disappeared on the dark
-        // translucent menu bar. White matches our other indicator elements
-        // (bars, pause glyph) and reads on every menu bar background.
-        [
-            .font: NSFont.menuBarFont(ofSize: 0),
-            .foregroundColor: NSColor.white.withAlphaComponent(alpha),
-        ]
-    }
-
-    /// Pre-render just the text strip (no artwork) into a bitmap at natural text width.
-    /// The result is cached by MenuBarController and reused on every equalizer tick,
-    /// avoiding expensive NSAttributedString drawing on the hot path.
-    static func renderTextStrip(title: String, artworkWidth: CGFloat) -> NSImage {
-        let textWidth = titleTextWidth(title)
-        let width = max(1, textWidth)
-        let height = barHeight
-        let pw = max(1, Int(width * scale))
-        let ph = max(1, Int(height * scale))
-        guard let rep = NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: pw,
-            pixelsHigh: ph,
-            bitsPerSample: 8,
-            samplesPerPixel: 4,
-            hasAlpha: true,
-            isPlanar: false,
-            colorSpaceName: .deviceRGB,
-            bytesPerRow: 0,
-            bitsPerPixel: 0
-        ), let ctx = NSGraphicsContext(bitmapImageRep: rep) else {
-            return NSImage(size: NSSize(width: width, height: height))
-        }
-        rep.size = NSSize(width: width, height: height)
-        NSGraphicsContext.saveGraphicsState()
-        defer { NSGraphicsContext.restoreGraphicsState() }
-        NSGraphicsContext.current = ctx
-
-        let font = NSFont.menuBarFont(ofSize: 0)
-        let fontHeight = font.ascender - font.descender
-        // Subtract (negative) descender to lift the baseline so the visible
-        // glyph block (descender↔ascender) is vertically centered.
-        let textY = (height - fontHeight) / 2 - font.descender
-        (title as NSString).draw(at: NSPoint(x: 0, y: textY), withAttributes: textAttributes())
-
-        let result = NSImage(size: NSSize(width: width, height: height))
-        result.addRepresentation(rep)
-        return result
-    }
-
-    /// Fast composite: blit artwork at left, then blit cached text strip to the right.
-    /// Only allocates one NSBitmapImageRep per equalizer tick but does no text drawing.
-    static func compositeWithStrip(
-        artwork: NSImage?,
-        textStrip: NSImage,
-        totalWidth: CGFloat
-    ) -> NSImage {
-        let height = barHeight
-        let pw = max(1, Int(totalWidth * scale))
-        let ph = max(1, Int(height * scale))
-        guard let rep = NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: pw,
-            pixelsHigh: ph,
-            bitsPerSample: 8,
-            samplesPerPixel: 4,
-            hasAlpha: true,
-            isPlanar: false,
-            colorSpaceName: .deviceRGB,
-            bytesPerRow: 0,
-            bitsPerPixel: 0
-        ), let ctx = NSGraphicsContext(bitmapImageRep: rep) else {
-            return NSImage(size: NSSize(width: totalWidth, height: height))
-        }
-        rep.size = NSSize(width: totalWidth, height: height)
-        NSGraphicsContext.saveGraphicsState()
-        defer { NSGraphicsContext.restoreGraphicsState() }
-        NSGraphicsContext.current = ctx
-
-        var textX: CGFloat = 0
-        if let artwork, artwork.size.width > 0 {
-            let artY = (height - artwork.size.height) / 2
-            artwork.draw(
-                in: NSRect(x: 0, y: artY, width: artwork.size.width, height: artwork.size.height),
-                from: .zero,
-                operation: .sourceOver,
-                fraction: 1.0
-            )
-            textX = artwork.size.width + artworkToTextGap
-        }
-
-        let stripY = (height - textStrip.size.height) / 2
-        textStrip.draw(
-            in: NSRect(x: textX, y: stripY, width: textStrip.size.width, height: textStrip.size.height),
-            from: .zero,
-            operation: .sourceOver,
-            fraction: 1.0
-        )
-
-        let result = NSImage(size: NSSize(width: totalWidth, height: height))
-        result.addRepresentation(rep)
-        return result
-    }
-
-    /// Composite the full menu bar bitmap.
-    ///
-    /// - Parameters:
-    ///   - artwork: The menuBarArtwork from NowPlayingViewModel (indicator + thumbnail).
-    ///   - newTitle: The title to render fully at alpha 1.
-    ///   - width: Total bitmap width to produce.
-    ///   - oldTitle: Previous title drawn at alpha `(1 - t)` during crossfade.
-    ///   - t: Crossfade progress 0…1. Pass 1 (or no oldTitle) for a clean render.
-    static func composite(
-        artwork: NSImage?,
-        newTitle: String,
-        width: CGFloat,
-        oldTitle: String?,
-        t: Double
-    ) -> NSImage {
-        let height = barHeight
-        let pw = max(1, Int(width * scale))
-        let ph = max(1, Int(height * scale))
-
-        guard let rep = NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: pw,
-            pixelsHigh: ph,
-            bitsPerSample: 8,
-            samplesPerPixel: 4,
-            hasAlpha: true,
-            isPlanar: false,
-            colorSpaceName: .deviceRGB,
-            bytesPerRow: 0,
-            bitsPerPixel: 0
-        ) else {
-            return NSImage(size: NSSize(width: width, height: height))
-        }
-        rep.size = NSSize(width: width, height: height)
-
-        guard let ctx = NSGraphicsContext(bitmapImageRep: rep) else {
-            let img = NSImage(size: NSSize(width: width, height: height))
-            img.addRepresentation(rep)
-            return img
-        }
-
-        NSGraphicsContext.saveGraphicsState()
-        defer { NSGraphicsContext.restoreGraphicsState() }
-        NSGraphicsContext.current = ctx
-
-        var textX: CGFloat = 0
-
-        // Draw artwork section if present
-        if let artwork, artwork.size.width > 0 {
-            let artY = (height - artwork.size.height) / 2
-            artwork.draw(
-                in: NSRect(x: 0, y: artY, width: artwork.size.width, height: artwork.size.height),
-                from: .zero,
-                operation: .sourceOver,
-                fraction: 1.0
-            )
-            textX = artwork.size.width + artworkToTextGap
-        }
-
-        // Available width for text
-        let textAreaWidth = max(0, width - textX)
-        guard textAreaWidth > 1 else {
-            let result = NSImage(size: NSSize(width: width, height: height))
-            result.addRepresentation(rep)
-            return result
-        }
-
-        let font = NSFont.menuBarFont(ofSize: 0)
-        let fontHeight = font.ascender - font.descender
-        // Subtract (negative) descender to lift the baseline so the visible
-        // glyph block (descender↔ascender) is vertically centered.
-        let textY = (height - fontHeight) / 2 - font.descender
-
-        // Draw old title fading out
-        if let old = oldTitle, t < 1.0 {
-            let oldAlpha = CGFloat(1.0 - t)
-            let oldAttrs = textAttributes(alpha: oldAlpha)
-            let oldStr = old as NSString
-            let clipRect = NSRect(x: textX, y: 0, width: textAreaWidth, height: height)
-            NSBezierPath(rect: clipRect).setClip()
-            oldStr.draw(at: NSPoint(x: textX, y: textY), withAttributes: oldAttrs)
-            // Reset clip
-            NSBezierPath(rect: NSRect(x: 0, y: 0, width: width, height: height)).setClip()
-        }
-
-        // Draw new title fading in
-        let newAlpha: CGFloat = (oldTitle != nil && t < 1.0) ? CGFloat(t) : 1.0
-        let newAttrs = textAttributes(alpha: newAlpha)
-        let newStr = newTitle as NSString
-        let clipRect = NSRect(x: textX, y: 0, width: textAreaWidth, height: height)
-        NSBezierPath(rect: clipRect).setClip()
-        newStr.draw(at: NSPoint(x: textX, y: textY), withAttributes: newAttrs)
-
-        let result = NSImage(size: NSSize(width: width, height: height))
-        result.addRepresentation(rep)
-        // Mark as template so the system can adapt it to the menu bar appearance
-        result.isTemplate = false
-        return result
-    }
 }
 
 // MARK: - WidthAnimator
@@ -337,8 +126,6 @@ final class MenuBarController {
     private var lastTitle: String = ""
     // Track current rendered width so we can interpolate from it
     private var currentWidth: CGFloat = 0
-    // Cached pre-rendered text strip keyed by title; avoids redrawing text on every equalizer tick
-    private var cachedTextStrip: (title: String, image: NSImage)?
     private var observationTask: Task<Void, Never>?
 
     init(viewModel: NowPlayingViewModel) {
@@ -365,9 +152,11 @@ final class MenuBarController {
         guard let button = statusItem.button else { return }
         button.target = self
         button.action = #selector(statusItemClicked(_:))
-        // Image-only so the cell doesn't add space for an absent title and
-        // doesn't try to lay out a separate text label next to our bitmap.
-        button.imagePosition = .imageOnly
+        // Use the native button text rendering for the title (always
+        // appearance-correct and never tinted-out by the system) and let our
+        // composite NSImage handle artwork + indicator.
+        button.imagePosition = .imageLeading
+        button.imageHugsTitle = true
         // Receive both left and right mouse-up so we can distinguish them in the handler
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
     }
@@ -464,7 +253,6 @@ final class MenuBarController {
 
         let oldTitle = lastTitle
         lastTitle = newTitle
-        cachedTextStrip = nil  // invalidate so next render draws the new title
 
         // First paint or tiny delta: no animation
         if oldTitle.isEmpty || abs(newWidth - currentWidth) < 4 {
@@ -492,59 +280,30 @@ final class MenuBarController {
         let artwork = viewModel.menuBarArtwork
         let title = lastTitle.isEmpty ? viewModel.menuBarTitle : lastTitle
 
-        let image: NSImage
-        let isCrossfading = oldTitle != nil && t < 1.0
-
-        if !isCrossfading {
-            // Fast path: composite artwork onto a cached pre-rendered text strip.
-            // This avoids redrawing text (the expensive part) on every equalizer tick.
-            let textStrip = cachedTextStripImage(for: title, artworkWidth: artwork?.size.width ?? 0)
-            image = MenuBarRenderer.compositeWithStrip(
-                artwork: artwork,
-                textStrip: textStrip,
-                totalWidth: width
-            )
+        // Image is just the artwork composite (artwork + indicator) — no text.
+        if let artwork {
+            artwork.isTemplate = false
+            statusItem.button?.image = artwork
         } else {
-            // During crossfade animation: full composite with alpha blending
-            image = MenuBarRenderer.composite(
-                artwork: artwork,
-                newTitle: title,
-                width: width,
-                oldTitle: oldTitle,
-                t: t
-            )
+            statusItem.button?.image = nil
         }
 
-        currentWidth = width
-        // Explicitly mark non-template every time. The button cell will auto-
-        // template an image otherwise, which converts our baked-in colors
-        // into the system's appearance tint and hides the white title text on
-        // some menu bar appearances.
-        image.isTemplate = false
-        statusItem.button?.image = image
-        // Remove any title so only the image shows in the button cell
-        statusItem.button?.title = ""
+        // Native button-title rendering. Always appearance-correct, never
+        // template-tinted away.
+        statusItem.button?.attributedTitle = NSAttributedString(
+            string: title,
+            attributes: [
+                .font: NSFont.menuBarFont(ofSize: 0),
+                .foregroundColor: NSColor.labelColor
+            ]
+        )
+
+        // Width is animated independently of content. While `statusItem.length`
+        // is below the natural fit, the title text gets clipped on the right —
+        // that's the "growing-into-view" reveal during a width animation.
         statusItem.length = width
+        currentWidth = width
 
-        Self.logger.info("render title='\(title, privacy: .public)' targetWidth=\(width, privacy: .public) artwork=\(String(describing: artwork?.size), privacy: .public) image.size=\(String(describing: image.size), privacy: .public) buttonFrame=\(String(describing: self.statusItem.button?.frame), privacy: .public) isTemplate=\(image.isTemplate, privacy: .public)")
-
-        // Dump the rendered bitmap on every full render so we can inspect it
-        // visually outside the menu bar context.
-        if !isCrossfading {
-            if let tiff = image.tiffRepresentation,
-               let rep = NSBitmapImageRep(data: tiff),
-               let png = rep.representation(using: .png, properties: [:]) {
-                try? png.write(to: URL(fileURLWithPath: "/tmp/songbar-render.png"))
-            }
-        }
-    }
-
-    private func cachedTextStripImage(for title: String, artworkWidth: CGFloat) -> NSImage {
-        if let cached = cachedTextStrip, cached.title == title {
-            return cached.image
-        }
-        let strip = MenuBarRenderer.renderTextStrip(title: title, artworkWidth: artworkWidth)
-        cachedTextStrip = (title: title, image: strip)
-        return strip
+        Self.logger.info("render title='\(title, privacy: .public)' targetWidth=\(width, privacy: .public) artwork=\(String(describing: artwork?.size), privacy: .public) buttonFrame=\(String(describing: self.statusItem.button?.frame), privacy: .public)")
     }
 }
