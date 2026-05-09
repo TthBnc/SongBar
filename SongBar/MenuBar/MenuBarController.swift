@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import QuartzCore
 import Observation
+import os
 
 // MARK: - MenuBarRenderer
 
@@ -326,6 +327,8 @@ final class WidthAnimator {
 /// Created once by AppDelegate and lives for the lifetime of the app.
 @MainActor
 final class MenuBarController {
+    private static let logger = Logger(subsystem: "dev.tothbnc.SongBar", category: "menubar")
+
     private let viewModel: NowPlayingViewModel
     private let statusItem: NSStatusItem
     private let popover: NSPopover
@@ -513,10 +516,27 @@ final class MenuBarController {
         }
 
         currentWidth = width
+        // Explicitly mark non-template every time. The button cell will auto-
+        // template an image otherwise, which converts our baked-in colors
+        // into the system's appearance tint and hides the white title text on
+        // some menu bar appearances.
+        image.isTemplate = false
         statusItem.button?.image = image
         // Remove any title so only the image shows in the button cell
         statusItem.button?.title = ""
         statusItem.length = width
+
+        Self.logger.info("render title='\(title, privacy: .public)' targetWidth=\(width, privacy: .public) artwork=\(String(describing: artwork?.size), privacy: .public) image.size=\(String(describing: image.size), privacy: .public) buttonFrame=\(String(describing: self.statusItem.button?.frame), privacy: .public) isTemplate=\(image.isTemplate, privacy: .public)")
+
+        // Dump the rendered bitmap on every full render so we can inspect it
+        // visually outside the menu bar context.
+        if !isCrossfading {
+            if let tiff = image.tiffRepresentation,
+               let rep = NSBitmapImageRep(data: tiff),
+               let png = rep.representation(using: .png, properties: [:]) {
+                try? png.write(to: URL(fileURLWithPath: "/tmp/songbar-render.png"))
+            }
+        }
     }
 
     private func cachedTextStripImage(for title: String, artworkWidth: CGFloat) -> NSImage {
