@@ -2,37 +2,21 @@ import SwiftUI
 
 @main
 struct SongBarApp: App {
-    @State private var viewModel = NowPlayingViewModel()
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        MenuBarExtra {
-            NowPlayingPanel(viewModel: viewModel)
-        } label: {
-            MenuBarLabel(viewModel: viewModel)
-        }
-        .menuBarExtraStyle(.window)
+        // SwiftUI App protocol requires at least one Scene. LSUIElement keeps
+        // it from showing. Settings is the lightest valid choice.
+        Settings { EmptyView() }
     }
 }
 
-private struct MenuBarLabel: View {
-    let viewModel: NowPlayingViewModel
+@MainActor
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    let viewModel = NowPlayingViewModel()
+    private var menuBarController: MenuBarController?
 
-    var body: some View {
-        HStack(spacing: 5) {
-            if let composite = viewModel.menuBarArtwork {
-                Image(nsImage: composite)
-            }
-            Text(viewModel.menuBarTitle)
-        }
-        .accessibilityLabel(accessibilityLabel)
-    }
-
-    private var accessibilityLabel: String {
-        switch viewModel.nowPlaying.playbackState {
-        case .playing: return "Now playing: \(viewModel.menuBarTitle)"
-        case .paused:  return "Paused: \(viewModel.menuBarTitle)"
-        default:       return viewModel.menuBarTitle
-        }
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        menuBarController = MenuBarController(viewModel: viewModel)
     }
 }
-
