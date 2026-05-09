@@ -115,7 +115,7 @@ final class WidthAnimator {
 /// Owns the NSStatusItem, NSPopover, rendering pipeline, and animation.
 /// Created once by AppDelegate and lives for the lifetime of the app.
 @MainActor
-final class MenuBarController {
+final class MenuBarController: NSObject, NSPopoverDelegate {
     private static let logger = Logger(subsystem: "dev.tothbnc.SongBar", category: "menubar")
 
     private let viewModel: NowPlayingViewModel
@@ -132,6 +132,7 @@ final class MenuBarController {
         self.viewModel = viewModel
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         self.popover = NSPopover()
+        super.init()
         setupStatusItem()
         setupPopover()
         startObservation()
@@ -164,6 +165,7 @@ final class MenuBarController {
     private func setupPopover() {
         popover.behavior = .transient
         popover.animates = true
+        popover.delegate = self
         let panel = NowPlayingPanel(viewModel: viewModel)
         let host = NSHostingController(rootView: panel)
         // Provide an initial content size; the SwiftUI .frame(width:360) drives actual sizing
@@ -206,10 +208,34 @@ final class MenuBarController {
         if popover.isShown {
             popover.performClose(nil)
         } else {
+            // Freeze any in-flight width animation so the popover doesn't
+            // shift while it's anchoring.
+            animator?.cancel()
+            animator = nil
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             // Bring app to front so the popover can receive key events
             NSApp.activate(ignoringOtherApps: true)
         }
+    }
+
+    // MARK: - NSPopoverDelegate
+
+    nonisolated func popoverDidClose(_ notification: Notification) {
+        // User dismissed the panel — sync the menu bar to the latest state
+        // without animating (they're not watching the menu bar transition).
+        Task { @MainActor [weak self] in
+            self?.snapToCurrentState()
+        }
+    }
+
+    private func snapToCurrentState() {
+        let newTitle = viewModel.menuBarTitle
+        let artwork = viewModel.menuBarArtwork
+        let newWidth = MenuBarRenderer.measure(artwork: artwork, title: newTitle)
+        animator?.cancel()
+        animator = nil
+        lastTitle = newTitle
+        renderAndApply(width: newWidth, oldTitle: nil, t: 1)
     }
 
     // MARK: - Observation
@@ -243,6 +269,15 @@ final class MenuBarController {
     private func handleStateChange() {
         let newTitle = viewModel.menuBarTitle
         let artwork = viewModel.menuBarArtwork
+
+        // Popover is shown: pin the menu bar item's width so the panel stays
+        // anchored where the user opened it. Image and title can still update
+        // silently (they don't move the button frame); only `length` does.
+        if popover.isShown {
+            applyContentOnly(artwork: artwork, title: newTitle)
+            return
+        }
+
         let newWidth = MenuBarRenderer.measure(artwork: artwork, title: newTitle)
 
         let titleChanged = newTitle != lastTitle
@@ -283,6 +318,27 @@ final class MenuBarController {
             }
         )
         animator?.animate(from: startWidth, to: newWidth, fromTitle: oldTitle, toTitle: newTitle)
+    }
+
+    private func applyContentOnly(artwork: NSImage?, title: String) {
+        // Sets image + title without touching length. Used while the popover
+        // is open so the button's geometry — and the popover's anchor —
+        // stays pinned. The cell may clip the title if length is too narrow
+        // for the new content; that's acceptable because the user is reading
+        // the popover, not the menu bar.
+        if let artwork {
+            artwork.isTemplate = false
+            statusItem.button?.image = artwork
+        } else {
+            statusItem.button?.image = nil
+        }
+        statusItem.button?.attributedTitle = NSAttributedString(
+            string: title,
+            attributes: [
+                .font: NSFont.menuBarFont(ofSize: 0),
+                .foregroundColor: NSColor.labelColor
+            ]
+        )
     }
 
     private func renderAndApply(width: CGFloat, oldTitle: String?, t: Double) {
