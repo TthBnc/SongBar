@@ -8,7 +8,7 @@ SongBar puts the current artist and song title in your menu bar. Click it for a 
 ![Platform](https://img.shields.io/badge/platform-macOS%2014+-blue)
 
 <p align="center">
-  <img src="docs/screenshots/panel.png" alt="SongBar in the menu bar with its panel open" width="429">
+  <img src="docs/screenshots/panel.png" alt="SongBar in the menu bar with its panel open" width="398">
 </p>
 
 ## Features
