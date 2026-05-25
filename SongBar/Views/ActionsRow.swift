@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ActionsRow: View {
@@ -104,6 +105,8 @@ private struct ShareCard: View {
     let shareURL: URL?
     let title: String?
     let artist: String?
+    @State private var anchorView: NSView?
+    @State private var activePicker: NSSharingServicePicker?
 
     private var shareLabel: some View {
         ZStack {
@@ -117,26 +120,63 @@ private struct ShareCard: View {
     }
 
     var body: some View {
-        if let url = shareURL {
-            ShareLink(
-                item: url,
-                subject: Text(title ?? "Song"),
-                message: Text([artist, title].compactMap { $0 }.joined(separator: " — "))
-            ) {
-                shareLabel
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Share track")
-            .help("Share")
-        } else {
-            Button {} label: {
-                shareLabel
-            }
-            .buttonStyle(.plain)
-            .disabled(true)
-            .accessibilityLabel("Share track")
-            .accessibilityHint("Unavailable for this track")
-            .help("Share")
+        Button {
+            presentSharePicker()
+        } label: {
+            shareLabel
+                .overlay {
+                    SharePickerAnchorView(anchorView: $anchorView)
+                        .allowsHitTesting(false)
+                }
+        }
+        .buttonStyle(.plain)
+        .disabled(shareURL == nil)
+        .accessibilityLabel("Share track")
+        .accessibilityHint(shareURL == nil ? "Unavailable for this track" : "")
+        .help("Share")
+    }
+
+    private func presentSharePicker() {
+        guard let shareURL else { return }
+        let picker = NSSharingServicePicker(items: [shareText(for: shareURL)])
+        activePicker = picker
+
+        if let anchorView {
+            picker.show(relativeTo: anchorView.bounds, of: anchorView, preferredEdge: .minY)
+        } else if let contentView = NSApp.keyWindow?.contentView {
+            picker.show(relativeTo: contentView.bounds, of: contentView, preferredEdge: .minY)
+        }
+    }
+
+    private func shareText(for url: URL) -> String {
+        let metadata = [artist, title].compactMap(cleaned).joined(separator: " - ")
+        if metadata.isEmpty {
+            return url.absoluteString
+        }
+        return "\(metadata)\n\(url.absoluteString)"
+    }
+
+    private func cleaned(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+}
+
+private struct SharePickerAnchorView: NSViewRepresentable {
+    @Binding var anchorView: NSView?
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            anchorView = view
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async {
+            anchorView = nsView
         }
     }
 }
