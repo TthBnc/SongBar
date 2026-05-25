@@ -105,8 +105,6 @@ private struct ShareCard: View {
     let shareURL: URL?
     let title: String?
     let artist: String?
-    @State private var anchorView: NSView?
-    @State private var activePicker: NSSharingServicePicker?
 
     private var shareLabel: some View {
         ZStack {
@@ -120,63 +118,84 @@ private struct ShareCard: View {
     }
 
     var body: some View {
-        Button {
-            presentSharePicker()
-        } label: {
-            shareLabel
-                .overlay {
-                    SharePickerAnchorView(anchorView: $anchorView)
-                        .allowsHitTesting(false)
-                }
-        }
-        .buttonStyle(.plain)
-        .disabled(shareURL == nil)
+        shareLabel
+            .overlay {
+                SharePickerTriggerView(
+                    shareURL: shareURL,
+                    accessibilityLabel: "Share track"
+                )
+                .frame(width: PanelMetrics.shareButtonWidth, height: PanelMetrics.actionHeight)
+            }
         .accessibilityLabel("Share track")
         .accessibilityHint(shareURL == nil ? "Unavailable for this track" : "")
         .help("Share")
     }
-
-    private func presentSharePicker() {
-        guard let shareURL else { return }
-        let picker = NSSharingServicePicker(items: [shareText(for: shareURL)])
-        activePicker = picker
-
-        if let anchorView {
-            picker.show(relativeTo: anchorView.bounds, of: anchorView, preferredEdge: .minY)
-        } else if let contentView = NSApp.keyWindow?.contentView {
-            picker.show(relativeTo: contentView.bounds, of: contentView, preferredEdge: .minY)
-        }
-    }
-
-    private func shareText(for url: URL) -> String {
-        let metadata = [artist, title].compactMap(cleaned).joined(separator: " - ")
-        if metadata.isEmpty {
-            return url.absoluteString
-        }
-        return "\(metadata)\n\(url.absoluteString)"
-    }
-
-    private func cleaned(_ value: String?) -> String? {
-        guard let value else { return nil }
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : trimmed
-    }
 }
 
-private struct SharePickerAnchorView: NSViewRepresentable {
-    @Binding var anchorView: NSView?
+private struct SharePickerTriggerView: NSViewRepresentable {
+    let shareURL: URL?
+    let accessibilityLabel: String
 
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        DispatchQueue.main.async {
-            anchorView = view
-        }
+    func makeNSView(context: Context) -> SharePickerTriggerNSView {
+        let view = SharePickerTriggerNSView()
+        updateNSView(view, context: context)
         return view
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {
-        DispatchQueue.main.async {
-            anchorView = nsView
+    func updateNSView(_ nsView: SharePickerTriggerNSView, context: Context) {
+        nsView.shareURL = shareURL
+        nsView.setAccessibilityLabel(accessibilityLabel)
+    }
+}
+
+private final class SharePickerTriggerNSView: NSView, NSSharingServicePickerDelegate {
+    var shareURL: URL? {
+        didSet {
+            if shareURL == nil {
+                closeActivePicker()
+            }
+            setAccessibilityEnabled(shareURL != nil)
+        }
+    }
+
+    private var activePicker: NSSharingServicePicker?
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        setAccessibilityRole(.button)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        if activePicker != nil {
+            closeActivePicker()
+            return
+        }
+
+        guard let shareURL else { return }
+        let picker = NSSharingServicePicker(items: [shareURL as NSURL])
+        picker.delegate = self
+        activePicker = picker
+        picker.show(relativeTo: bounds, of: self, preferredEdge: .minY)
+    }
+
+    private func closeActivePicker() {
+        if let activePicker {
+            activePicker.close()
+        }
+        activePicker = nil
+    }
+
+    func sharingServicePicker(
+        _ sharingServicePicker: NSSharingServicePicker,
+        didChoose service: NSSharingService?
+    ) {
+        if sharingServicePicker === activePicker {
+            activePicker = nil
         }
     }
 }
