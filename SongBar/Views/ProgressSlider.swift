@@ -15,6 +15,8 @@ struct ProgressSlider: View {
     }
 
     var body: some View {
+        let displayedPosition = viewModel.displayPosition
+
         VStack(spacing: 8) {
             Slider(
                 value: sliderBinding,
@@ -29,14 +31,22 @@ struct ProgressSlider: View {
                 }
             )
             .tint(.white)
+            .opacity(viewModel.isSeekPending ? 0.86 : 1)
             .disabled(isDisabled)
             .accessibilityLabel("Playback position")
+            .accessibilityValue(TimeFormatter.format(seconds: displayedPosition))
+            .animation(
+                viewModel.isDraggingSeek ? nil : .spring(response: 0.2, dampingFraction: 0.82),
+                value: displayedPosition
+            )
+            .animation(.easeOut(duration: 0.16), value: viewModel.isSeekPending)
 
             HStack {
-                Text(TimeFormatter.format(seconds: viewModel.displayPosition))
+                Text(TimeFormatter.format(seconds: displayedPosition))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
+                    .contentTransition(.numericText(value: displayedPosition))
                 Spacer()
                 Text(TimeFormatter.format(seconds: viewModel.nowPlaying.duration))
                     .font(.caption)

@@ -22,7 +22,27 @@ final class NowPlayingViewModel {
     var isDraggingSeek: Bool { seekDragState != nil }
 
     var displayPosition: TimeInterval {
-        seekDragState ?? nowPlaying.position
+        seekDragState ?? optimisticPosition ?? nowPlaying.position
+    }
+
+    var displayPlaybackState: PlaybackState {
+        optimisticPlaybackState ?? nowPlaying.playbackState
+    }
+
+    var isPlayPausePending: Bool {
+        inflightCommands.contains(.playPause)
+    }
+
+    var isNextPending: Bool {
+        inflightCommands.contains(.next)
+    }
+
+    var isPreviousPending: Bool {
+        inflightCommands.contains(.previous)
+    }
+
+    var isSeekPending: Bool {
+        inflightCommands.contains(.seek)
     }
 
     private let client: SpotifyClient
@@ -33,11 +53,13 @@ final class NowPlayingViewModel {
     private var artworkLoadTask: Task<Void, Never>?
     private var lastArtworkURL: URL?
     private var seekDragState: TimeInterval?
+    private var optimisticPlaybackState: PlaybackState?
+    private var optimisticPosition: TimeInterval?
     private var inflightCommands: Set<Command> = []
     private var copyConfirmationResetTask: Task<Void, Never>?
     private var equalizerTask: Task<Void, Never>?
 
-    private enum Command: Hashable { case playPause, next, previous }
+    private enum Command: Hashable { case playPause, next, previous, seek }
 
     init(
         client: SpotifyClient = AppleEventsSpotifyClient(),
@@ -76,12 +98,26 @@ final class NowPlayingViewModel {
 
     func refresh() async {
         let snapshot = await client.fetchNowPlaying()
-        apply(snapshot)
+        apply(snapshot, reconcileOptimisticState: inflightCommands.isEmpty)
     }
 
-    func playPause() async { await runCommand(.playPause) { await self.client.playPause() } }
-    func next() async { await runCommand(.next) { await self.client.nextTrack() } }
-    func previous() async { await runCommand(.previous) { await self.client.previousTrack() } }
+    func playPause() async {
+        await runCommand(.playPause, optimisticUpdate: togglePlaybackOptimistically) {
+            await self.client.playPause()
+        }
+    }
+
+    func next() async {
+        await runCommand(.next, optimisticUpdate: prepareTrackSkipOptimistically) {
+            await self.client.nextTrack()
+        }
+    }
+
+    func previous() async {
+        await runCommand(.previous, optimisticUpdate: prepareTrackSkipOptimistically) {
+            await self.client.previousTrack()
+        }
+    }
 
     func beginSeekDrag(at seconds: TimeInterval) {
         seekDragState = clamp(seconds)
@@ -95,8 +131,9 @@ final class NowPlayingViewModel {
     func endSeekDrag(at seconds: TimeInterval) async {
         let target = clamp(seconds)
         seekDragState = nil
-        await client.seek(to: target)
-        await refresh()
+        await runCommand(.seek, optimisticUpdate: { optimisticPosition = target }) {
+            await self.client.seek(to: target)
+        }
     }
 
     func cancelSeekDrag() {
@@ -123,15 +160,26 @@ final class NowPlayingViewModel {
         showCopyConfirmation()
     }
 
-    private func runCommand(_ command: Command, action: @escaping () async -> Void) async {
+    private func runCommand(
+        _ command: Command,
+        optimisticUpdate: () -> Void,
+        action: @escaping () async -> Void
+    ) async {
         guard !inflightCommands.contains(command) else { return }
         inflightCommands.insert(command)
         defer { inflightCommands.remove(command) }
+        optimisticUpdate()
         await action()
-        await refresh()
+        let snapshot = await client.fetchNowPlaying()
+        apply(snapshot, reconcileOptimisticState: true)
     }
 
-    private func apply(_ snapshot: NowPlaying) {
+    private func apply(_ snapshot: NowPlaying, reconcileOptimisticState: Bool = true) {
+        if reconcileOptimisticState {
+            optimisticPlaybackState = nil
+            optimisticPosition = nil
+        }
+
         let titleChanged = snapshot.spotifyURI != nowPlaying.spotifyURI
             || snapshot.title != nowPlaying.title
         nowPlaying = snapshot
@@ -162,7 +210,7 @@ final class NowPlayingViewModel {
     }
 
     private func pollInterval() -> Duration {
-        switch nowPlaying.playbackState {
+        switch displayPlaybackState {
         case .playing where !isDraggingSeek:
             return .seconds(1)
         default:
@@ -178,7 +226,7 @@ final class NowPlayingViewModel {
     }
 
     private func updateEqualizerAnimation() {
-        switch nowPlaying.playbackState {
+        switch displayPlaybackState {
         case .playing:
             rebuildMenuBarArtwork()
             guard equalizerTask == nil else { return }
@@ -207,7 +255,7 @@ final class NowPlayingViewModel {
             return
         }
         let iSize = Self.indicatorSize
-        switch nowPlaying.playbackState {
+        switch displayPlaybackState {
         case .playing:
             let frame = equalizerFrame
             menuBarArtwork = thumbnail.withIndicatorOnLeft(indicatorSize: iSize) { origin, sz in
@@ -220,6 +268,22 @@ final class NowPlayingViewModel {
         default:
             menuBarArtwork = thumbnail
         }
+    }
+
+    private func togglePlaybackOptimistically() {
+        switch displayPlaybackState {
+        case .playing:
+            optimisticPlaybackState = .paused
+        case .paused, .stopped:
+            optimisticPlaybackState = .playing
+        case .unknown, .unavailable:
+            return
+        }
+        updateEqualizerAnimation()
+    }
+
+    private func prepareTrackSkipOptimistically() {
+        optimisticPosition = 0
     }
 
     private func showCopyConfirmation() {
