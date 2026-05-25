@@ -120,6 +120,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
     private static let logger = Logger(subsystem: "dev.tothbnc.SongBar", category: "menubar")
 
     private let viewModel: NowPlayingViewModel
+    private let auth: SpotifyAuthViewModel
     private let statusItem: NSStatusItem
     private let popover: NSPopover
     private var animator: WidthAnimator?
@@ -129,8 +130,9 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
     private var currentWidth: CGFloat = 0
     private var observationTask: Task<Void, Never>?
 
-    init(viewModel: NowPlayingViewModel) {
+    init(viewModel: NowPlayingViewModel, auth: SpotifyAuthViewModel) {
         self.viewModel = viewModel
+        self.auth = auth
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         self.popover = NSPopover()
         super.init()
@@ -186,7 +188,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         popover.behavior = .transient
         popover.animates = true
         popover.delegate = self
-        let panel = NowPlayingPanel(viewModel: viewModel)
+        let panel = NowPlayingPanel(viewModel: viewModel, auth: auth)
         let host = NSHostingController(rootView: panel)
         // Provide an initial content size; the SwiftUI panel frame drives actual sizing.
         let initialSize = NSSize(width: PanelMetrics.width, height: 560)

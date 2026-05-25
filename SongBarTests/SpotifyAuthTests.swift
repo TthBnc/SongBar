@@ -70,6 +70,36 @@ final class SpotifyAuthTests: XCTestCase {
         XCTAssertEqual(components.path, "/callback")
         XCTAssertEqual(components.queryItems?.value(named: "code"), "abc")
     }
+
+    func test_libraryItemAcceptsTrackURIOnly() {
+        XCTAssertEqual(
+            SpotifyLibraryItem.trackURI(from: " spotify:track:4uLU6hMCjMI75M1A2tKUQC "),
+            "spotify:track:4uLU6hMCjMI75M1A2tKUQC"
+        )
+        XCTAssertNil(SpotifyLibraryItem.trackURI(from: "spotify:album:0JGOiO34nwfUdDrD612dOp"))
+        XCTAssertNil(SpotifyLibraryItem.trackURI(from: "spotify:track:"))
+        XCTAssertNil(SpotifyLibraryItem.trackURI(from: nil))
+    }
+
+    func test_libraryRequestUsesGenericLibraryEndpointShape() throws {
+        let client = SpotifyLibraryClient()
+        let endpoint = URL(string: "https://api.spotify.com/v1/me/library")!
+        let request = try client.makeRequest(
+            method: "PUT",
+            endpoint: endpoint,
+            uri: "spotify:track:4uLU6hMCjMI75M1A2tKUQC",
+            accessToken: "access-token"
+        )
+
+        let components = try XCTUnwrap(URLComponents(url: try XCTUnwrap(request.url), resolvingAgainstBaseURL: false))
+
+        XCTAssertEqual(request.httpMethod, "PUT")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer access-token")
+        XCTAssertEqual(components.scheme, "https")
+        XCTAssertEqual(components.host, "api.spotify.com")
+        XCTAssertEqual(components.path, "/v1/me/library")
+        XCTAssertEqual(components.queryItems?.value(named: "uris"), "spotify:track:4uLU6hMCjMI75M1A2tKUQC")
+    }
 }
 
 private extension Array where Element == URLQueryItem {

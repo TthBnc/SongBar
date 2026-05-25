@@ -31,6 +31,7 @@
 		A1B0000000000000000000B6 /* SpotifyOAuthCallbackReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000B6 /* SpotifyOAuthCallbackReceiver.swift */; };
 		A1B0000000000000000000B7 /* SpotifyTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000B7 /* SpotifyTokenStore.swift */; };
 		A1B0000000000000000000B8 /* SpotifyAuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000B8 /* SpotifyAuthViewModel.swift */; };
+		A1B0000000000000000000B9 /* SpotifyLibraryClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0000000000000000000B9 /* SpotifyLibraryClient.swift */; };
 		A2B0000000000000000000A1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2F0000000000000000000A1 /* Assets.xcassets */; };
 		B1B0000000000000000000A1 /* SpotifyURLTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1F0000000000000000000A1 /* SpotifyURLTests.swift */; };
 		B1B0000000000000000000A2 /* TimeFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1F0000000000000000000A2 /* TimeFormatterTests.swift */; };
@@ -64,6 +65,7 @@
 		A1F0000000000000000000B6 /* SpotifyOAuthCallbackReceiver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyOAuthCallbackReceiver.swift; sourceTree = "<group>"; };
 		A1F0000000000000000000B7 /* SpotifyTokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyTokenStore.swift; sourceTree = "<group>"; };
 		A1F0000000000000000000B8 /* SpotifyAuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyAuthViewModel.swift; sourceTree = "<group>"; };
+		A1F0000000000000000000B9 /* SpotifyLibraryClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyLibraryClient.swift; sourceTree = "<group>"; };
 		A2F0000000000000000000A1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A3F0000000000000000000A1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A3F0000000000000000000A2 /* SongBar.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SongBar.entitlements; sourceTree = "<group>"; };
@@ -162,6 +164,7 @@
 				A1F0000000000000000000B5 /* SpotifyAuthClient.swift */,
 				A1F0000000000000000000B6 /* SpotifyOAuthCallbackReceiver.swift */,
 				A1F0000000000000000000B7 /* SpotifyTokenStore.swift */,
+				A1F0000000000000000000B9 /* SpotifyLibraryClient.swift */,
 			);
 			path = Spotify;
 			sourceTree = "<group>";
@@ -333,6 +336,7 @@
 				A1B0000000000000000000B6 /* SpotifyOAuthCallbackReceiver.swift in Sources */,
 				A1B0000000000000000000B7 /* SpotifyTokenStore.swift in Sources */,
 				A1B0000000000000000000B8 /* SpotifyAuthViewModel.swift in Sources */,
+				A1B0000000000000000000B9 /* SpotifyLibraryClient.swift in Sources */,
 				A1B0000000000000000000AF /* MenuBarTitleFormatter.swift in Sources */,
 				A1B0000000000000000000B0 /* TimeFormatter.swift in Sources */,
 				A1B0000000000000000000B1 /* MenuBarController.swift in Sources */,
