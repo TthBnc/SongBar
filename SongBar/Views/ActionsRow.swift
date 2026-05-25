@@ -8,7 +8,7 @@ struct ActionsRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 8) {
             ActionCard(
                 icon: "macwindow",
                 title: "Open",
@@ -57,21 +57,23 @@ private struct ActionCard: View {
     private var cardContent: some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 20, weight: .regular))
+                .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(.primary)
-                .frame(width: 24)
+                .frame(width: 18)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.callout.weight(.bold))
+                    .font(.caption.weight(.bold))
                     .lineLimit(1)
+                    .minimumScaleFactor(0.82)
                 Text(subtitle)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.82)
             }
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 10)
         .frame(height: PanelMetrics.actionHeight)
         .frame(maxWidth: .infinity, minHeight: PanelMetrics.actionHeight)
         .modifier(ActionCardBackground())
@@ -106,7 +108,7 @@ private struct ShareCard: View {
     private var shareLabel: some View {
         ZStack {
             Image(systemName: "square.and.arrow.up")
-                .font(.system(size: 22, weight: .regular))
+                .font(.system(size: 19, weight: .regular))
                 .foregroundStyle(.primary)
         }
         .frame(width: PanelMetrics.shareButtonWidth, height: PanelMetrics.actionHeight)

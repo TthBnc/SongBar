@@ -6,8 +6,9 @@ enum PanelMetrics {
     static let artworkSize: CGFloat = 230
     static let artworkRadius: CGFloat = 14
     static let controlRadius: CGFloat = 14
-    static let actionHeight: CGFloat = 50
-    static let shareButtonWidth: CGFloat = 56
+    static let actionHeight: CGFloat = 48
+    static let shareButtonWidth: CGFloat = 46
+    static let metadataIconWidth: CGFloat = 17
     static let dividerColor = Color.white.opacity(0.08)
     static let elevatedSurface = Color.white.opacity(0.08)
     static let elevatedStroke = Color.white.opacity(0.07)
@@ -81,27 +82,36 @@ struct NowPlayingPanel: View {
     // MARK: - Title block
 
     private var metadataRow: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 5) {
             if let title = viewModel.nowPlaying.title {
-                Text(title)
-                    .font(.title2.weight(.bold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-                    .truncationMode(.tail)
+                MetadataLine(
+                    icon: "music.note",
+                    text: title,
+                    font: .title2.weight(.bold),
+                    textStyle: .primary,
+                    lineLimit: 2,
+                    accessibilityLabel: "Song title, \(title)"
+                )
             }
             if let artist = viewModel.nowPlaying.artist {
-                Text(artist)
-                    .font(.body)
-                    .foregroundStyle(.primary.opacity(0.85))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                MetadataLine(
+                    icon: "person.fill",
+                    text: artist,
+                    font: .body,
+                    textStyle: .primary.opacity(0.85),
+                    lineLimit: 1,
+                    accessibilityLabel: "Artist, \(artist)"
+                )
             }
             if let album = viewModel.nowPlaying.album {
-                Text(album)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                MetadataLine(
+                    icon: "opticaldisc",
+                    text: album,
+                    font: .subheadline,
+                    textStyle: .secondary,
+                    lineLimit: 1,
+                    accessibilityLabel: "Album, \(album)"
+                )
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -124,5 +134,48 @@ struct NowPlayingPanel: View {
         }
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(.vertical, 12)
+    }
+}
+
+private struct MetadataLine: View {
+    let icon: String
+    let text: String
+    let font: Font
+    let textStyle: AnyShapeStyle
+    let lineLimit: Int
+    let accessibilityLabel: String
+
+    init<S: ShapeStyle>(
+        icon: String,
+        text: String,
+        font: Font,
+        textStyle: S,
+        lineLimit: Int,
+        accessibilityLabel: String
+    ) {
+        self.icon = icon
+        self.text = text
+        self.font = font
+        self.textStyle = AnyShapeStyle(textStyle)
+        self.lineLimit = lineLimit
+        self.accessibilityLabel = accessibilityLabel
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 7) {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.tertiary)
+                .frame(width: PanelMetrics.metadataIconWidth, alignment: .center)
+                .accessibilityHidden(true)
+
+            Text(text)
+                .font(font)
+                .foregroundStyle(textStyle)
+                .lineLimit(lineLimit)
+                .truncationMode(.tail)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
     }
 }
