@@ -2,7 +2,7 @@
 
 A minimal macOS menu bar now-playing app for Spotify.
 
-SongBar puts the current artist and song title in your menu bar. Click it for a compact panel with album art, a progress slider, playback controls, and quick actions to open or share the current track.
+SongBar puts the current artist and song title in your menu bar. Click it for a compact panel with album art, a progress slider, playback controls, quick actions, and an optional Liked Songs button.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-macOS%2014+-blue)
@@ -16,9 +16,10 @@ SongBar puts the current artist and song title in your menu bar. Click it for a 
 - Album art + artist – song title visible in your menu bar
 - Animated equalizer indicator while music plays
 - Native popover panel: artwork, progress slider, prev / play / next, share actions
+- Optional Spotify login for connected features such as saving the current track to Liked Songs
 - Adaptive polling — 1 s while playing, 3 s otherwise — so it stays light on battery
-- No Dock icon, no login, no analytics, no telemetry
-- Talks only to the **local** Spotify desktop app via Apple Events. Your Spotify credentials never leave Spotify.
+- No Dock icon, no analytics, no telemetry
+- Base playback features talk to the **local** Spotify desktop app via Apple Events and do not require Spotify login
 
 ## Install
 
@@ -44,11 +45,27 @@ See [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) if anything goes sidewa
 
 SongBar does not work with the web player or Spotify Connect playback on a remote device — it reads the local desktop app.
 
+## Optional Spotify Login
+
+SongBar's base features work without Spotify login. To save or remove tracks from **Liked Songs**, connect Spotify in **SongBar Settings** with a Spotify Developer Client ID:
+
+1. Open the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and create an app.
+2. Use any app name and description you want. Select **Web API**.
+3. Add this exact redirect URI: `http://127.0.0.1:17654/callback`
+4. Save the app, then copy its **Client ID**. You do not need the Client Secret.
+5. In SongBar, open **Settings**, paste the Client ID, and click **Connect Spotify**.
+
+Use `127.0.0.1` exactly. Spotify allows HTTP for loopback redirect URIs, but `localhost` is not accepted.
+
+Spotify apps in development mode support up to 5 allowlisted users. Add your Spotify account in the app's **User Management** page before connecting. If you distribute SongBar to other people, they can either use the base features without login or connect with their own Spotify Developer app and Client ID.
+
 ## Privacy
 
 - SongBar **doesn't** ask for your Spotify password. It never sees one.
 - SongBar **doesn't** send your listening history anywhere. There is no server, no analytics, no telemetry.
-- Album artwork is downloaded directly from Spotify's CDN to render the panel — that's the only network traffic the app makes.
+- Optional Spotify login uses OAuth PKCE in your browser. SongBar stores the returned tokens in your macOS Keychain.
+- Album artwork is downloaded directly from Spotify's CDN to render the panel.
+- If you connect Spotify, SongBar also talks directly to Spotify's Web API for connected features such as Liked Songs.
 
 ## Build from source
 
