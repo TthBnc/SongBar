@@ -149,13 +149,15 @@ final class SpotifyOAuthCallbackReceiver: @unchecked Sendable {
             let requestLine = request.components(separatedBy: "\r\n").first,
             let target = parseTarget(from: requestLine)
         else {
-            sendResponse(on: connection, status: "400 Bad Request", body: Self.html(title: "SongBar", message: "Invalid callback request."))
-            complete(.failure(SpotifyOAuthCallbackError.invalidRequest))
+            sendResponse(on: connection, status: "400 Bad Request", body: Self.html(title: "SongBar", message: "Invalid callback request.")) {
+                self.complete(.failure(SpotifyOAuthCallbackError.invalidRequest))
+            }
             return
         }
 
         guard
-            let components = URLComponents(string: "http://127.0.0.1\(target)"),
+            let components = SpotifyOAuthCallbackTarget.components(from: target),
+            isAllowedCallbackHost(components.host),
             components.path == "/callback"
         else {
             sendResponse(on: connection, status: "404 Not Found", body: Self.html(title: "SongBar", message: "SongBar is waiting for the Spotify callback."))
@@ -165,31 +167,43 @@ final class SpotifyOAuthCallbackReceiver: @unchecked Sendable {
         let queryItems = components.queryItems ?? []
         if let oauthError = queryItems.value(named: "error") {
             let description = queryItems.value(named: "error_description") ?? oauthError
-            sendResponse(on: connection, status: "200 OK", body: Self.html(title: "SongBar", message: "Spotify login was not completed. You can close this tab."))
-            complete(.failure(SpotifyOAuthCallbackError.authorizationDenied(description)))
+            sendResponse(on: connection, status: "200 OK", body: Self.html(title: "SongBar", message: "Spotify login was not completed. You can close this tab.")) {
+                self.complete(.failure(SpotifyOAuthCallbackError.authorizationDenied(description)))
+            }
             return
         }
 
         guard queryItems.value(named: "state") == expectedState else {
-            sendResponse(on: connection, status: "400 Bad Request", body: Self.html(title: "SongBar", message: "SongBar rejected this callback."))
-            complete(.failure(SpotifyOAuthCallbackError.stateMismatch))
+            sendResponse(on: connection, status: "400 Bad Request", body: Self.html(title: "SongBar", message: "SongBar rejected this callback.")) {
+                self.complete(.failure(SpotifyOAuthCallbackError.stateMismatch))
+            }
             return
         }
 
         guard let code = queryItems.value(named: "code"), !code.isEmpty else {
-            sendResponse(on: connection, status: "400 Bad Request", body: Self.html(title: "SongBar", message: "Spotify did not return a code."))
-            complete(.failure(SpotifyOAuthCallbackError.missingCode))
+            sendResponse(on: connection, status: "400 Bad Request", body: Self.html(title: "SongBar", message: "Spotify did not return a code.")) {
+                self.complete(.failure(SpotifyOAuthCallbackError.missingCode))
+            }
             return
         }
 
-        sendResponse(on: connection, status: "200 OK", body: Self.html(title: "SongBar connected", message: "You can close this tab and return to SongBar."))
-        complete(.success(SpotifyOAuthCallback(code: code)))
+        sendResponse(
+            on: connection,
+            status: "200 OK",
+            body: Self.html(title: "SongBar connected", message: "Spotify is connected. You can close this tab and return to SongBar.")
+        ) {
+            self.complete(.success(SpotifyOAuthCallback(code: code)))
+        }
     }
 
     private func parseTarget(from requestLine: String) -> String? {
         let parts = requestLine.split(separator: " ")
         guard parts.count >= 2, parts[0] == "GET" else { return nil }
         return String(parts[1])
+    }
+
+    private func isAllowedCallbackHost(_ host: String?) -> Bool {
+        host == "127.0.0.1" || host == "localhost"
     }
 
     private func complete(_ result: Result<SpotifyOAuthCallback, Error>) {
@@ -210,7 +224,12 @@ final class SpotifyOAuthCallbackReceiver: @unchecked Sendable {
         }
     }
 
-    private func sendResponse(on connection: NWConnection, status: String, body: String) {
+    private func sendResponse(
+        on connection: NWConnection,
+        status: String,
+        body: String,
+        completion: @escaping @Sendable () -> Void = {}
+    ) {
         let bodyData = Data(body.utf8)
         let header = """
         HTTP/1.1 \(status)\r
@@ -221,28 +240,93 @@ final class SpotifyOAuthCallbackReceiver: @unchecked Sendable {
         """
         var responseData = Data(header.utf8)
         responseData.append(bodyData)
-        connection.send(content: responseData, completion: .contentProcessed { _ in
+        connection.send(content: responseData, completion: .contentProcessed { [weak self] _ in
             connection.cancel()
+            self?.queue.async {
+                completion()
+            }
         })
     }
 
     private static func html(title: String, message: String) -> String {
-        """
+        let escapedTitle = title.htmlEscaped
+        let escapedMessage = message.htmlEscaped
+        return """
         <!doctype html>
-        <html>
+        <html lang="en">
         <head>
         <meta charset="utf-8">
-        <title>\(title)</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>\(escapedTitle)</title>
         <style>
-        body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#111;color:#f5f5f5;display:grid;place-items:center;height:100vh;margin:0}
-        main{max-width:420px;padding:28px;text-align:center}
-        h1{font-size:20px;margin:0 0 8px}
-        p{color:#b8b8b8;line-height:1.45;margin:0}
+        :root{color-scheme:dark}
+        *{box-sizing:border-box}
+        body{min-height:100vh;margin:0;display:grid;place-items:center;background:#0b0b0d;color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+        body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 50% 0%,rgba(29,185,84,.22),transparent 34%),linear-gradient(180deg,#151518 0%,#09090a 100%);pointer-events:none}
+        main{position:relative;width:min(420px,calc(100vw - 48px));padding:34px 30px 30px;text-align:center;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(22,22,24,.82);box-shadow:0 26px 70px rgba(0,0,0,.38)}
+        .mark{width:46px;height:46px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;background:#1db954;color:#071108;font-size:22px;font-weight:800}
+        .eyebrow{margin:0 0 8px;color:#a7a7ad;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+        h1{margin:0 0 10px;font-size:26px;line-height:1.12;font-weight:750;letter-spacing:0}
+        p{margin:0 auto 24px;max-width:320px;color:#c5c5ca;font-size:15px;line-height:1.48}
+        button{height:38px;padding:0 18px;border:0;border-radius:999px;background:#f4f4f5;color:#101012;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+        button:hover{background:#fff}
+        .hint{margin-top:16px;color:#74747b;font-size:12px;line-height:1.4}
         </style>
         </head>
-        <body><main><h1>\(title)</h1><p>\(message)</p></main></body>
+        <body>
+        <main>
+        <div class="mark">&#10003;</div>
+        <p class="eyebrow">SongBar</p>
+        <h1>\(escapedTitle)</h1>
+        <p>\(escapedMessage)</p>
+        <button onclick="window.close()">Close tab</button>
+        <div class="hint">The connection is handled locally on this Mac.</div>
+        </main>
+        <script>setTimeout(function(){window.close()},1200)</script>
+        </body>
         </html>
         """
+    }
+}
+
+struct SpotifyOAuthCallbackTarget {
+    static func components(from rawTarget: String) -> URLComponents? {
+        let target = rawTarget.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if target.hasPrefix("http://") || target.hasPrefix("https://") {
+            guard let absoluteComponents = URLComponents(string: target) else { return nil }
+            let pathAndQuery = pathAndQuery(from: absoluteComponents)
+            let normalizedPathAndQuery = normalize(pathAndQuery)
+
+            if normalizedPathAndQuery != pathAndQuery {
+                return URLComponents(string: "http://127.0.0.1\(normalizedPathAndQuery)")
+            }
+
+            return absoluteComponents
+        }
+
+        return URLComponents(string: "http://127.0.0.1\(normalize(target))")
+    }
+
+    private static func normalize(_ target: String) -> String {
+        let loopbackPrefix = "/127.0.0.1:\(SpotifyAuthConfiguration.callbackPort)"
+        if target.hasPrefix(loopbackPrefix) {
+            return String(target.dropFirst(loopbackPrefix.count))
+        }
+
+        let localhostPrefix = "/localhost:\(SpotifyAuthConfiguration.callbackPort)"
+        if target.hasPrefix(localhostPrefix) {
+            return String(target.dropFirst(localhostPrefix.count))
+        }
+
+        return target
+    }
+
+    private static func pathAndQuery(from components: URLComponents) -> String {
+        if let query = components.percentEncodedQuery {
+            return "\(components.path)?\(query)"
+        }
+        return components.path
     }
 }
 
@@ -283,5 +367,15 @@ private final class OneShotContinuation: @unchecked Sendable {
 private extension Array where Element == URLQueryItem {
     func value(named name: String) -> String? {
         first { $0.name == name }?.value
+    }
+}
+
+private extension String {
+    var htmlEscaped: String {
+        replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "'", with: "&#39;")
     }
 }

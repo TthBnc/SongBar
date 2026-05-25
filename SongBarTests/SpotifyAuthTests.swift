@@ -38,6 +38,38 @@ final class SpotifyAuthTests: XCTestCase {
             try client.makeAuthorizationRequest(clientID: "  ", state: "state", codeVerifier: SpotifyPKCE.makeCodeVerifier())
         )
     }
+
+    func test_callbackTargetParsesNormalCallbackPath() throws {
+        let components = try XCTUnwrap(SpotifyOAuthCallbackTarget.components(from: "/callback?code=abc&state=state-123"))
+        XCTAssertEqual(components.host, "127.0.0.1")
+        XCTAssertEqual(components.path, "/callback")
+        XCTAssertEqual(components.queryItems?.value(named: "code"), "abc")
+        XCTAssertEqual(components.queryItems?.value(named: "state"), "state-123")
+    }
+
+    func test_callbackTargetParsesAbsoluteCallbackURL() throws {
+        let components = try XCTUnwrap(SpotifyOAuthCallbackTarget.components(from: "http://127.0.0.1:17654/callback?code=abc"))
+        XCTAssertEqual(components.host, "127.0.0.1")
+        XCTAssertEqual(components.port, 17_654)
+        XCTAssertEqual(components.path, "/callback")
+        XCTAssertEqual(components.queryItems?.value(named: "code"), "abc")
+    }
+
+    func test_callbackTargetRepairsBrowserPathWithEmbeddedLoopbackHost() throws {
+        let components = try XCTUnwrap(SpotifyOAuthCallbackTarget.components(from: "/127.0.0.1:17654/callback?code=abc"))
+        XCTAssertEqual(components.host, "127.0.0.1")
+        XCTAssertEqual(components.path, "/callback")
+        XCTAssertEqual(components.queryItems?.value(named: "code"), "abc")
+    }
+
+    func test_callbackTargetRepairsAbsoluteBrowserPathWithEmbeddedLoopbackHost() throws {
+        let components = try XCTUnwrap(
+            SpotifyOAuthCallbackTarget.components(from: "http://127.0.0.1/127.0.0.1:17654/callback?code=abc")
+        )
+        XCTAssertEqual(components.host, "127.0.0.1")
+        XCTAssertEqual(components.path, "/callback")
+        XCTAssertEqual(components.queryItems?.value(named: "code"), "abc")
+    }
 }
 
 private extension Array where Element == URLQueryItem {
@@ -45,4 +77,3 @@ private extension Array where Element == URLQueryItem {
         first { $0.name == name }?.value
     }
 }
-
