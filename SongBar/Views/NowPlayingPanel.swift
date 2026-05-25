@@ -62,7 +62,18 @@ struct NowPlayingPanel: View {
                 .padding(.bottom, 10)
 
             HStack {
+                SettingsLink {
+                    Image(systemName: "gearshape")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 24, height: 22)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Open settings")
+                .help("Settings")
+
                 Spacer()
+
                 Button("Quit") {
                     NSApplication.shared.terminate(nil)
                 }
