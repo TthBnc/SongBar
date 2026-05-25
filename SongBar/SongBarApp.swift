@@ -3,10 +3,11 @@ import SwiftUI
 @main
 struct SongBarApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @State private var spotifyAuthViewModel = SpotifyAuthViewModel()
 
     var body: some Scene {
         Settings {
-            SongBarSettingsView()
+            SongBarSettingsView(auth: spotifyAuthViewModel)
         }
     }
 }

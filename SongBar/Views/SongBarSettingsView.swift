@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SongBarSettingsView: View {
+    let auth: SpotifyAuthViewModel
     @AppStorage("spotify.clientID") private var spotifyClientID = ""
 
     private var hasClientID: Bool {
@@ -52,9 +53,7 @@ struct SongBarSettingsView: View {
     private var spotifySection: some View {
         SettingsSection(title: "Spotify", icon: "music.note") {
             SettingsRow(title: "Account") {
-                Label("Not connected", systemImage: "circle.dashed")
-                    .foregroundStyle(.secondary)
-                    .labelStyle(.titleAndIcon)
+                accountStatusLabel
             }
 
             VStack(alignment: .leading, spacing: 7) {
@@ -69,6 +68,15 @@ struct SongBarSettingsView: View {
                     .accessibilityLabel("Spotify Client ID")
             }
 
+            SettingsRow(title: "Redirect URI") {
+                Text(SpotifyAuthConfiguration.redirectURI.absoluteString)
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+            }
+
+            connectionMessage
+
             HStack {
                 Link(
                     "Developer Dashboard",
@@ -78,10 +86,67 @@ struct SongBarSettingsView: View {
 
                 Spacer()
 
-                Button("Connect Spotify") {}
-                    .disabled(true)
-                    .help(hasClientID ? "Spotify login will be wired next." : "Enter a Spotify Client ID first.")
+                if auth.isConnected {
+                    Button("Disconnect", role: .destructive) {
+                        auth.disconnect()
+                    }
+                    .disabled(auth.isConnecting)
+                } else {
+                    Button {
+                        Task { await auth.connect(clientID: spotifyClientID) }
+                    } label: {
+                        connectButtonLabel
+                    }
+                    .disabled(!hasClientID || auth.isConnecting)
+                    .help(hasClientID ? "Connect your Spotify account." : "Enter a Spotify Client ID first.")
+                }
             }
+        }
+    }
+
+    @ViewBuilder
+    private var accountStatusLabel: some View {
+        if auth.isConnecting {
+            Label("Connecting", systemImage: "arrow.triangle.2.circlepath")
+                .foregroundStyle(.secondary)
+                .labelStyle(.titleAndIcon)
+        } else if auth.isConnected {
+            Label("Connected", systemImage: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+                .labelStyle(.titleAndIcon)
+        } else {
+            Label("Not connected", systemImage: "circle.dashed")
+                .foregroundStyle(.secondary)
+                .labelStyle(.titleAndIcon)
+        }
+    }
+
+    @ViewBuilder
+    private var connectionMessage: some View {
+        if let errorMessage = auth.errorMessage {
+            Label(errorMessage, systemImage: "exclamationmark.triangle.fill")
+                .font(.caption)
+                .foregroundStyle(.orange)
+                .labelStyle(.titleAndIcon)
+                .fixedSize(horizontal: false, vertical: true)
+        } else if let statusMessage = auth.statusMessage {
+            Label(statusMessage, systemImage: auth.isConnected ? "checkmark.circle.fill" : "info.circle")
+                .font(.caption)
+                .foregroundStyle(auth.isConnected ? .green : .secondary)
+                .labelStyle(.titleAndIcon)
+        }
+    }
+
+    @ViewBuilder
+    private var connectButtonLabel: some View {
+        if auth.isConnecting {
+            HStack(spacing: 7) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Connecting")
+            }
+        } else {
+            Label("Connect Spotify", systemImage: "link")
         }
     }
 
@@ -94,8 +159,11 @@ struct SongBarSettingsView: View {
             }
 
             SettingsRow(title: "Connected features") {
-                Label("Requires Spotify approval", systemImage: "lock.circle")
-                    .foregroundStyle(.secondary)
+                Label(
+                    auth.isConnected ? "Available for this account" : "Requires Spotify login",
+                    systemImage: auth.isConnected ? "checkmark.circle.fill" : "lock.circle"
+                )
+                    .foregroundStyle(auth.isConnected ? .green : .secondary)
                     .labelStyle(.titleAndIcon)
             }
         }
@@ -142,5 +210,5 @@ private struct SettingsRow<Trailing: View>: View {
 }
 
 #Preview {
-    SongBarSettingsView()
+    SongBarSettingsView(auth: SpotifyAuthViewModel(loadStoredSession: false))
 }
