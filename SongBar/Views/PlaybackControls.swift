@@ -7,11 +7,11 @@ struct PlaybackControls: View {
         viewModel.nowPlaying.playbackState == .playing
     }
 
-    private let sideSize: CGFloat = 50
-    private let centerSize: CGFloat = 64
+    private let sideSize: CGFloat = 52
+    private let centerSize: CGFloat = 66
 
     var body: some View {
-        HStack(spacing: 18) {
+        HStack(spacing: 20) {
             sideButton(
                 systemImage: "backward.fill",
                 accessibility: "Previous track"
@@ -75,7 +75,7 @@ struct PlaybackControls: View {
             Button(action: action) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.10))
+                        .fill(PanelMetrics.elevatedSurface)
                     Image(systemName: systemImage)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.white)

@@ -188,10 +188,11 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         popover.delegate = self
         let panel = NowPlayingPanel(viewModel: viewModel)
         let host = NSHostingController(rootView: panel)
-        // Provide an initial content size; the SwiftUI .frame(width:360) drives actual sizing
-        host.view.frame = NSRect(origin: .zero, size: NSSize(width: 360, height: 580))
+        // Provide an initial content size; the SwiftUI panel frame drives actual sizing.
+        let initialSize = NSSize(width: PanelMetrics.width, height: 560)
+        host.view.frame = NSRect(origin: .zero, size: initialSize)
         popover.contentViewController = host
-        popover.contentSize = NSSize(width: 360, height: 580)
+        popover.contentSize = initialSize
     }
 
     private func setupRightClickMenu() -> NSMenu {

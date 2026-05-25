@@ -3,21 +3,25 @@ import SwiftUI
 struct ActionsRow: View {
     let viewModel: NowPlayingViewModel
 
+    private var canOpenSpotify: Bool {
+        viewModel.nowPlaying.availability != .notInstalled
+    }
+
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 12) {
             ActionCard(
-                icon: "link",
-                title: "Track",
-                subtitle: "Open in Spotify",
-                enabled: viewModel.nowPlaying.hasShareableTrack
+                icon: "macwindow",
+                title: "Open",
+                subtitle: "Spotify",
+                enabled: canOpenSpotify
             ) {
-                Task { await viewModel.openCurrentTrack() }
+                Task { await viewModel.openSpotify() }
             }
 
             ActionCard(
-                icon: viewModel.copyConfirmation ? "checkmark" : "doc.on.doc",
-                title: viewModel.copyConfirmation ? "Copied" : "Copy Link",
-                subtitle: "Share Song",
+                icon: viewModel.copyConfirmation ? "checkmark" : "link",
+                title: viewModel.copyConfirmation ? "Copied" : "Copy",
+                subtitle: "Link",
                 enabled: viewModel.nowPlaying.hasShareableTrack
             ) {
                 viewModel.copyShareURL()
@@ -47,17 +51,18 @@ private struct ActionCard: View {
         .buttonStyle(.plain)
         .disabled(!enabled)
         .accessibilityLabel("\(title), \(subtitle)")
+        .accessibilityHint(enabled ? "" : "Unavailable right now")
     }
 
     private var cardContent: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 16, weight: .regular))
+                .font(.system(size: 20, weight: .regular))
                 .foregroundStyle(.primary)
-                .frame(width: 22)
+                .frame(width: 24)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.callout.weight(.semibold))
+                    .font(.callout.weight(.bold))
                     .lineLimit(1)
                 Text(subtitle)
                     .font(.caption)
@@ -66,9 +71,9 @@ private struct ActionCard: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 9)
-        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 12)
+        .frame(height: PanelMetrics.actionHeight)
+        .frame(maxWidth: .infinity, minHeight: PanelMetrics.actionHeight)
         .modifier(ActionCardBackground())
         .opacity(enabled ? 1 : 0.45)
     }
@@ -78,16 +83,16 @@ private struct ActionCardBackground: ViewModifier {
     func body(content: Content) -> some View {
         if #available(macOS 26, *) {
             content
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 12))
+                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: PanelMetrics.controlRadius))
         } else {
             content
                 .background(
-                    Color.white.opacity(0.07),
-                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    PanelMetrics.elevatedSurface,
+                    in: RoundedRectangle(cornerRadius: PanelMetrics.controlRadius, style: .continuous)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Color.white.opacity(0.06), lineWidth: 0.5)
+                    RoundedRectangle(cornerRadius: PanelMetrics.controlRadius, style: .continuous)
+                        .stroke(PanelMetrics.elevatedStroke, lineWidth: 0.5)
                 )
         }
     }
@@ -99,25 +104,12 @@ private struct ShareCard: View {
     let artist: String?
 
     private var shareLabel: some View {
-        HStack(spacing: 8) {
+        ZStack {
             Image(systemName: "square.and.arrow.up")
-                .font(.system(size: 16, weight: .regular))
+                .font(.system(size: 22, weight: .regular))
                 .foregroundStyle(.primary)
-                .frame(width: 22)
-            VStack(alignment: .leading, spacing: 1) {
-                Text("Share")
-                    .font(.callout.weight(.semibold))
-                    .lineLimit(1)
-                Text("Options")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 9)
-        .frame(maxWidth: .infinity)
+        .frame(width: PanelMetrics.shareButtonWidth, height: PanelMetrics.actionHeight)
         .modifier(ActionCardBackground())
         .opacity(shareURL == nil ? 0.45 : 1)
     }
@@ -132,10 +124,17 @@ private struct ShareCard: View {
                 shareLabel
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Share, options")
+            .accessibilityLabel("Share track")
+            .help("Share")
         } else {
-            shareLabel
-                .accessibilityLabel("Share, options")
+            Button {} label: {
+                shareLabel
+            }
+            .buttonStyle(.plain)
+            .disabled(true)
+            .accessibilityLabel("Share track")
+            .accessibilityHint("Unavailable for this track")
+            .help("Share")
         }
     }
 }

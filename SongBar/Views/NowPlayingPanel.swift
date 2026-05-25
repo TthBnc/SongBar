@@ -1,5 +1,18 @@
 import SwiftUI
 
+enum PanelMetrics {
+    static let width: CGFloat = 310
+    static let padding: CGFloat = 20
+    static let artworkSize: CGFloat = 230
+    static let artworkRadius: CGFloat = 14
+    static let controlRadius: CGFloat = 14
+    static let actionHeight: CGFloat = 50
+    static let shareButtonWidth: CGFloat = 56
+    static let dividerColor = Color.white.opacity(0.08)
+    static let elevatedSurface = Color.white.opacity(0.08)
+    static let elevatedStroke = Color.white.opacity(0.07)
+}
+
 struct NowPlayingPanel: View {
     @Bindable var viewModel: NowPlayingViewModel
 
@@ -14,14 +27,14 @@ struct NowPlayingPanel: View {
 
             HStack {
                 Spacer(minLength: 0)
-                ArtworkView(image: viewModel.artwork, size: 160)
+                ArtworkView(image: viewModel.artwork, size: PanelMetrics.artworkSize)
                 Spacer(minLength: 0)
             }
-            .padding(.bottom, 22)
+            .padding(.bottom, 18)
 
             if availability == .ok {
                 metadataRow
-                    .padding(.bottom, 18)
+                    .padding(.bottom, 16)
                 ProgressSlider(viewModel: viewModel)
                     .padding(.bottom, 18)
             } else if availability == .noActiveTrack {
@@ -34,27 +47,32 @@ struct NowPlayingPanel: View {
                 PlaybackControls(viewModel: viewModel)
                 Spacer(minLength: 0)
             }
-            .padding(.bottom, 22)
+            .padding(.bottom, 24)
+
+            Divider()
+                .overlay(PanelMetrics.dividerColor)
+                .padding(.bottom, 14)
 
             ActionsRow(viewModel: viewModel)
                 .padding(.bottom, 14)
 
             Divider()
-                .padding(.bottom, 8)
+                .overlay(PanelMetrics.dividerColor)
+                .padding(.bottom, 10)
 
             HStack {
                 Spacer()
-                Button("Quit SongBar") {
+                Button("Quit") {
                     NSApplication.shared.terminate(nil)
                 }
                 .buttonStyle(.borderless)
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.secondary)
                 .accessibilityLabel("Quit SongBar")
             }
         }
-        .padding(20)
-        .frame(width: 360)
+        .padding(PanelMetrics.padding)
+        .frame(width: PanelMetrics.width)
         .onAppear {
             Task { await viewModel.refresh() }
         }
@@ -68,7 +86,7 @@ struct NowPlayingPanel: View {
                 Text(title)
                     .font(.title2.weight(.bold))
                     .foregroundStyle(.primary)
-                    .lineLimit(1)
+                    .lineLimit(2)
                     .truncationMode(.tail)
             }
             if let artist = viewModel.nowPlaying.artist {

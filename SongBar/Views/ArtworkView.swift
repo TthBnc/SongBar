@@ -21,8 +21,8 @@ struct ArtworkView: View {
             }
         }
         .frame(width: size, height: size)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .shadow(color: .black.opacity(0.45), radius: 18, x: 0, y: 10)
+        .clipShape(RoundedRectangle(cornerRadius: PanelMetrics.artworkRadius, style: .continuous))
+        .shadow(color: .black.opacity(0.42), radius: 16, x: 0, y: 9)
         .shadow(color: .black.opacity(0.18), radius: 3, x: 0, y: 1)
         .accessibilityLabel("Album artwork")
     }
