@@ -52,6 +52,10 @@ final class SeekClampingTests: XCTestCase {
 
         func fetchNowPlaying() async -> NowPlaying { nowPlaying }
 
+        func setNowPlaying(_ value: NowPlaying) {
+            nowPlaying = value
+        }
+
         func playPause() async {
             playPauseStarted = true
             resumePlayPauseStartWaiters()
@@ -244,6 +248,30 @@ final class SeekClampingTests: XCTestCase {
         XCTAssertEqual(vm.nowPlaying.playbackState, .paused)
         XCTAssertEqual(vm.displayPlaybackState, .paused)
         XCTAssertFalse(vm.isPlayPausePending)
+    }
+
+    func test_playPauseKeepsOptimisticStateAcrossStaleRefresh() async {
+        let initial = makeNowPlaying(position: 10, playbackState: .playing)
+        let stale = makeNowPlaying(position: 10, playbackState: .playing)
+        let confirmed = makeNowPlaying(position: 10, playbackState: .paused)
+        let client = BlockingSpotifyClient(nowPlaying: initial)
+        let vm = await makeViewModel(client: client)
+
+        let commandTask = Task { await vm.playPause() }
+        await client.waitForPlayPauseStart()
+
+        await client.completePlayPause(returning: stale)
+        await commandTask.value
+
+        XCTAssertEqual(vm.nowPlaying.playbackState, .playing)
+        XCTAssertEqual(vm.displayPlaybackState, .paused)
+        XCTAssertFalse(vm.isPlayPausePending)
+
+        await client.setNowPlaying(confirmed)
+        await vm.refresh()
+
+        XCTAssertEqual(vm.nowPlaying.playbackState, .paused)
+        XCTAssertEqual(vm.displayPlaybackState, .paused)
     }
 
     func test_seekCommitKeepsTargetVisibleBeforeRefresh() async {

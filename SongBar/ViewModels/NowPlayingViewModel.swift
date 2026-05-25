@@ -18,6 +18,14 @@ final class NowPlayingViewModel {
     private var equalizerFrame: Int = 0
     private var roundedThumbnail: NSImage?
     private static let indicatorSize = NSSize(width: 11, height: 12)
+    private static let optimisticHoldSeconds: TimeInterval = 2.5
+    private static let optimisticPositionTolerance: TimeInterval = 2.0
+    private static let optimisticRefreshDelays: [Duration] = [
+        .milliseconds(250),
+        .milliseconds(500),
+        .milliseconds(750),
+        .milliseconds(1_000)
+    ]
 
     var isDraggingSeek: Bool { seekDragState != nil }
 
@@ -54,10 +62,13 @@ final class NowPlayingViewModel {
     private var lastArtworkURL: URL?
     private var seekDragState: TimeInterval?
     private var optimisticPlaybackState: PlaybackState?
+    private var optimisticPlaybackDeadline: Date?
     private var optimisticPosition: TimeInterval?
+    private var optimisticPositionDeadline: Date?
     private var inflightCommands: Set<Command> = []
     private var copyConfirmationResetTask: Task<Void, Never>?
     private var equalizerTask: Task<Void, Never>?
+    private var optimisticReconciliationTask: Task<Void, Never>?
 
     private enum Command: Hashable { case playPause, next, previous, seek }
 
@@ -94,6 +105,8 @@ final class NowPlayingViewModel {
         copyConfirmationResetTask = nil
         equalizerTask?.cancel()
         equalizerTask = nil
+        optimisticReconciliationTask?.cancel()
+        optimisticReconciliationTask = nil
     }
 
     func refresh() async {
@@ -131,7 +144,7 @@ final class NowPlayingViewModel {
     func endSeekDrag(at seconds: TimeInterval) async {
         let target = clamp(seconds)
         seekDragState = nil
-        await runCommand(.seek, optimisticUpdate: { optimisticPosition = target }) {
+        await runCommand(.seek, optimisticUpdate: { setOptimisticPosition(target) }) {
             await self.client.seek(to: target)
         }
     }
@@ -172,16 +185,18 @@ final class NowPlayingViewModel {
         await action()
         let snapshot = await client.fetchNowPlaying()
         apply(snapshot, reconcileOptimisticState: true)
+        scheduleOptimisticReconciliation()
     }
 
     private func apply(_ snapshot: NowPlaying, reconcileOptimisticState: Bool = true) {
+        let trackChanged = snapshot.spotifyURI != nowPlaying.spotifyURI
+            || snapshot.title != nowPlaying.title
+
         if reconcileOptimisticState {
-            optimisticPlaybackState = nil
-            optimisticPosition = nil
+            reconcileOptimisticDisplay(with: snapshot, trackChanged: trackChanged)
         }
 
-        let titleChanged = snapshot.spotifyURI != nowPlaying.spotifyURI
-            || snapshot.title != nowPlaying.title
+        let titleChanged = trackChanged
         nowPlaying = snapshot
         menuBarTitle = MenuBarTitleFormatter.format(nowPlaying: snapshot)
         updateEqualizerAnimation()
@@ -206,6 +221,54 @@ final class NowPlayingViewModel {
             artwork = nil
             roundedThumbnail = nil
             menuBarArtwork = nil
+        }
+    }
+
+    private var hasOptimisticDisplayState: Bool {
+        optimisticPlaybackState != nil || optimisticPosition != nil
+    }
+
+    private func reconcileOptimisticDisplay(with snapshot: NowPlaying, trackChanged: Bool) {
+        if let targetState = optimisticPlaybackState {
+            if snapshot.playbackState == targetState || optimisticPlaybackExpired {
+                optimisticPlaybackState = nil
+                optimisticPlaybackDeadline = nil
+            }
+        }
+
+        if let targetPosition = optimisticPosition {
+            let confirmedPosition = abs(snapshot.position - targetPosition) <= Self.optimisticPositionTolerance
+            let confirmedTrackSkip = targetPosition == 0 && trackChanged
+            if confirmedPosition || confirmedTrackSkip || optimisticPositionExpired {
+                optimisticPosition = nil
+                optimisticPositionDeadline = nil
+            }
+        }
+    }
+
+    private var optimisticPlaybackExpired: Bool {
+        guard let deadline = optimisticPlaybackDeadline else { return true }
+        return Date() >= deadline
+    }
+
+    private var optimisticPositionExpired: Bool {
+        guard let deadline = optimisticPositionDeadline else { return true }
+        return Date() >= deadline
+    }
+
+    private func scheduleOptimisticReconciliation() {
+        optimisticReconciliationTask?.cancel()
+        guard hasOptimisticDisplayState else {
+            optimisticReconciliationTask = nil
+            return
+        }
+
+        optimisticReconciliationTask = Task { @MainActor [weak self] in
+            for delay in Self.optimisticRefreshDelays {
+                try? await Task.sleep(for: delay)
+                guard let self, !Task.isCancelled, self.hasOptimisticDisplayState else { return }
+                await self.refresh()
+            }
         }
     }
 
@@ -279,11 +342,17 @@ final class NowPlayingViewModel {
         case .unknown, .unavailable:
             return
         }
+        optimisticPlaybackDeadline = Date().addingTimeInterval(Self.optimisticHoldSeconds)
         updateEqualizerAnimation()
     }
 
     private func prepareTrackSkipOptimistically() {
-        optimisticPosition = 0
+        setOptimisticPosition(0)
+    }
+
+    private func setOptimisticPosition(_ position: TimeInterval) {
+        optimisticPosition = position
+        optimisticPositionDeadline = Date().addingTimeInterval(Self.optimisticHoldSeconds)
     }
 
     private func showCopyConfirmation() {
