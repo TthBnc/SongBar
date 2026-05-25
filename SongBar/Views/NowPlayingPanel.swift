@@ -165,7 +165,7 @@ private struct MetadataLine: View {
         HStack(alignment: .firstTextBaseline, spacing: 7) {
             Image(systemName: icon)
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.white.opacity(0.58))
                 .frame(width: PanelMetrics.metadataIconWidth, alignment: .center)
                 .accessibilityHidden(true)
 
